@@ -1,3 +1,3 @@
 [submodule "vendor/tree-sitter-ddlog"]
 	path = vendor/tree-sitter-ddlog
-	url = git@github.com:ddlog-lsp/tree-sitter-ddlog.git
+	url = https://github.com/ddlog-lsp/tree-sitter-ddlog

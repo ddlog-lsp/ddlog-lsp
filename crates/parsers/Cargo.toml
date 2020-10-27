@@ -1,0 +1,24 @@
+[package]
+edition = "2018"
+name = "ddlog-lsp-parsers"
+version = "0.0.0"
+authors = ["Darin Morrison <darinmorrison@users.noreply.github.com>"]
+license = "Apache-2.0 WITH LLVM-exception"
+readme = "README.md"
+repository = "https://github.com/ddlog-lsp/ddlog-lsp"
+description = """
+Tree-sitter parsers for the DDlog language server.
+"""
+
+[badges]
+maintenance = { status = "experimental" }
+
+[build-dependencies]
+anyhow = "1.0"
+cc = "1.0"
+
+[dependencies]
+anyhow = "1.0"
+thiserror = "1.0"
+lazy_static = "1.4"
+tree-sitter = "0.17"
