@@ -19,6 +19,7 @@ path = "src/bin/main.rs"
 
 [features]
 default = ["threaded"]
+corpus = []
 threaded = ["tokio/rt-multi-thread"]
 
 [build-dependencies]
