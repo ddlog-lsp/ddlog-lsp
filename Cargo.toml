@@ -4,6 +4,7 @@ lto = "fat"
 
 [workspace]
 members = [
+  "crates/macros",
   "crates/parsers",
   "crates/server",
   "xtask"

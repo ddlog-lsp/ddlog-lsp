@@ -1,0 +1,26 @@
+[package]
+edition = "2018"
+name = "ddlog-lsp-macros"
+version = "0.0.0"
+authors = ["Darin Morrison <darinmorrison@users.noreply.github.com>"]
+license = "Apache-2.0 WITH LLVM-exception"
+readme = "README.md"
+repository = "https://github.com/ddlog-lsp/ddlog-lsp"
+description = """
+Internal macros for the DDlog language server implementation.
+"""
+
+[lib]
+proc-macro = true
+
+[badges]
+maintenance = { status = "experimental" }
+
+[dependencies]
+anyhow = "1.0"
+glob = "0.3"
+heck = "0.3"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "1.0"
+thiserror = "1.0"

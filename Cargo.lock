@@ -226,6 +226,7 @@ dependencies = [
  "built",
  "clap",
  "dashmap",
+ "ddlog-lsp-macros",
  "ddlog-lsp-parsers",
  "ddlog-lsp-testing",
  "env_logger",
