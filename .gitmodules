@@ -1,3 +1,6 @@
 [submodule "vendor/tree-sitter-ddlog"]
 	path = vendor/tree-sitter-ddlog
 	url = https://github.com/ddlog-lsp/tree-sitter-ddlog
+[submodule "vendor/differential-datalog"]
+	path = vendor/differential-datalog
+	url = https://github.com/vmware/differential-datalog
