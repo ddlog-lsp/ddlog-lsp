@@ -8,6 +8,6 @@ members = [
   "crates/parsers",
   "crates/server",
   "crates/testing",
-  "xtask"
+  "xtask",
 ]
 
