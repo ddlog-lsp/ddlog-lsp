@@ -20,6 +20,7 @@ pub(crate) mod document {
         #[allow(clippy::if_same_then_else)]
         if tree_was_generated {
             // TODO: run the diagnostics provider
+            crate::provider::diagnostics::tree::change(session.clone(), uri.clone()).await?;
         } else {
             // TODO: report
         }
@@ -33,14 +34,14 @@ pub(crate) mod document {
             text_document: TextDocumentIdentifier { uri },
         } = &params;
         session.remove_document(uri)?;
-        // TODO: run the diagnostics provider
+        crate::provider::diagnostics::tree::close(session.clone(), uri.clone()).await?;
         Ok(())
     }
 
     /// Handle a document "open" event.
     pub(crate) async fn open(session: Arc<Session>, params: DidOpenTextDocumentParams) -> anyhow::Result<()> {
         let DidOpenTextDocumentParams {
-            text_document: TextDocumentItem { .. },
+            text_document: TextDocumentItem { uri, .. },
         } = &params;
 
         // spawn a parser and try to generate a syntax tree
@@ -49,8 +50,9 @@ pub(crate) mod document {
         // on successful generation of a parse tree (which may contain syntax errors)
         #[allow(clippy::if_same_then_else)]
         if tree_was_generated {
-            // TODO: run the diagnostics provider
+            crate::provider::diagnostics::tree::open(session.clone(), uri.clone()).await?;
         } else {
+            panic!();
             // TODO: report
         }
 
