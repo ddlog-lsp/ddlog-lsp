@@ -22,10 +22,6 @@ impl Server {
 
 /// Compute the server capabilities.
 pub fn capabilities() -> ServerCapabilities {
-    let document_symbol_provider = Some(OneOf::Left(true));
-
-    let hover_provider = Some(HoverProviderCapability::Simple(true));
-
     let text_document_sync = Some(TextDocumentSyncCapability::Options(TextDocumentSyncOptions {
         open_close: Some(true),
         change: Some(TextDocumentSyncKind::Full),
@@ -33,8 +29,6 @@ pub fn capabilities() -> ServerCapabilities {
     }));
 
     ServerCapabilities {
-        document_symbol_provider,
-        hover_provider,
         text_document_sync,
         ..Default::default()
     }
