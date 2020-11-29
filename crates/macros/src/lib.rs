@@ -107,6 +107,10 @@ pub fn corpus_tests(input: TokenStream) -> TokenStream {
         let path_name = path.to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
 
+        if file_name.ends_with(".fail.dl") {
+            continue;
+        }
+
         // skip the file if contained in the exclude list; otherwise continue
         if !exclude.contains(&String::from(file_name)) {
             let file_stem = path.file_stem().unwrap().to_str().unwrap();
