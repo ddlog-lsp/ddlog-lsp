@@ -2,8 +2,6 @@
 
 mod text_document {
     mod did_open {
-        use ddlog_lsp_macros::corpus_tests;
-
         fn handler(_corpus: &str, path: &str) {
             use ddlog_lsp_parsers::core::language::Language;
             use ddlog_lsp_testing as testing;
@@ -52,10 +50,26 @@ mod text_document {
             runtime.block_on(handler(path)).unwrap();
         }
 
-        corpus_tests! {
-            corpus: differential_datalog,
-            include: "vendor/differential-datalog/test/antrea/*.dl",
-            handler: crate::lsp::text_document::did_open::handler,
+        mod differential_datalog {
+            use ddlog_lsp_macros::corpus_tests;
+
+            corpus_tests! {
+                corpus: antrea,
+                include: "vendor/differential-datalog/test/antrea/**/*.dl",
+                handler: crate::lsp::text_document::did_open::handler,
+            }
+
+            corpus_tests! {
+                corpus: datalog_tests,
+                include: "vendor/differential-datalog/test/datalog_tests/**/*.dl",
+                handler: crate::lsp::text_document::did_open::handler,
+            }
+
+            corpus_tests! {
+                corpus: types_tests,
+                include: "vendor/differential-datalog/test/types_tests/**/*.dl",
+                handler: crate::lsp::text_document::did_open::handler,
+            }
         }
     }
 }
