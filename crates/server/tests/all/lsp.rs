@@ -54,6 +54,12 @@ mod text_document {
             use ddlog_lsp_macros::corpus_tests;
 
             corpus_tests! {
+                corpus: lib,
+                include: "vendor/differential-datalog/lib/**/*.dl",
+                handler: crate::lsp::text_document::did_open::handler,
+            }
+
+            corpus_tests! {
                 corpus: antrea,
                 include: "vendor/differential-datalog/test/antrea/**/*.dl",
                 handler: crate::lsp::text_document::did_open::handler,
