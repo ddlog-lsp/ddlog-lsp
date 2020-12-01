@@ -67,7 +67,7 @@ pub mod dat {
         use lazy_static::lazy_static;
 
         lazy_static! {
-            pub static ref PARSE: u16 = super::language().id_for_node_kind("PARSE", true);
+            pub static ref ROOT: u16 = super::language().id_for_node_kind("ROOT", true);
         }
     }
 }
@@ -94,7 +94,7 @@ pub mod dl {
         use lazy_static::lazy_static;
 
         lazy_static! {
-            pub static ref PARSE: u16 = super::language().id_for_node_kind("PARSE", true);
+            pub static ref ROOT: u16 = super::language().id_for_node_kind("ROOT", true);
         }
     }
 }
