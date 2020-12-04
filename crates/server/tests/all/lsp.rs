@@ -51,30 +51,60 @@ mod text_document {
         }
 
         mod differential_datalog {
-            use ddlog_lsp_macros::corpus_tests;
+            mod dat {
+                use ddlog_lsp_macros::corpus_tests;
 
-            corpus_tests! {
-                corpus: lib,
-                include: "vendor/differential-datalog/lib/**/*.dl",
-                handler: crate::lsp::text_document::did_open::handler,
+                corpus_tests! {
+                    corpus: lib,
+                    include: "vendor/differential-datalog/lib/**/*.dat",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
+
+                corpus_tests! {
+                    corpus: antrea,
+                    include: "vendor/differential-datalog/test/antrea/**/*.dat",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
+
+                corpus_tests! {
+                    corpus: datalog_tests,
+                    include: "vendor/differential-datalog/test/datalog_tests/**/*.dat",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
+
+                corpus_tests! {
+                    corpus: types_tests,
+                    include: "vendor/differential-datalog/test/types_tests/**/*.dat",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
             }
 
-            corpus_tests! {
-                corpus: antrea,
-                include: "vendor/differential-datalog/test/antrea/**/*.dl",
-                handler: crate::lsp::text_document::did_open::handler,
-            }
+            mod dl {
+                use ddlog_lsp_macros::corpus_tests;
 
-            corpus_tests! {
-                corpus: datalog_tests,
-                include: "vendor/differential-datalog/test/datalog_tests/**/*.dl",
-                handler: crate::lsp::text_document::did_open::handler,
-            }
+                corpus_tests! {
+                    corpus: lib,
+                    include: "vendor/differential-datalog/lib/**/*.dl",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
 
-            corpus_tests! {
-                corpus: types_tests,
-                include: "vendor/differential-datalog/test/types_tests/**/*.dl",
-                handler: crate::lsp::text_document::did_open::handler,
+                corpus_tests! {
+                    corpus: antrea,
+                    include: "vendor/differential-datalog/test/antrea/**/*.dl",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
+
+                corpus_tests! {
+                    corpus: datalog_tests,
+                    include: "vendor/differential-datalog/test/datalog_tests/**/*.dl",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
+
+                corpus_tests! {
+                    corpus: types_tests,
+                    include: "vendor/differential-datalog/test/types_tests/**/*.dl",
+                    handler: crate::lsp::text_document::did_open::handler,
+                }
             }
         }
     }
