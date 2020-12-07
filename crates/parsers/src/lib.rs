@@ -1,5 +1,7 @@
 //! Parsers for the DDlog language server.
 
+#![recursion_limit="512"]
+
 #![deny(clippy::all)]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
