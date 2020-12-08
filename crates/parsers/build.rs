@@ -8,6 +8,7 @@ fn compile_tree_sitter_grammars() -> anyhow::Result<()> {
     cc.include(dir.join("ddlog/dat/src"));
     cc.file(dir.join("ddlog/dat/src/parser.c"));
     cc.file(dir.join("ddlog/dat/src/scanner.cc"));
+    cc.flag_if_supported("-Wno-unused-but-set-variable");
     cc.compile("tree-sitter-ddlog-dat");
 
     println!("cargo:rerun-if-changed={:?}", dir.join("ddlog/dl/src/parser.c"));
@@ -15,6 +16,7 @@ fn compile_tree_sitter_grammars() -> anyhow::Result<()> {
     cc.include(dir.join("ddlog/dl/src"));
     cc.file(dir.join("ddlog/dl/src/parser.c"));
     cc.file(dir.join("ddlog/dl/src/scanner.cc"));
+    cc.flag_if_supported("-Wno-unused-but-set-variable");
     cc.compile("tree-sitter-ddlog-dl");
 
     Ok(())
