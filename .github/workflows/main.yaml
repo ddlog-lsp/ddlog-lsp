@@ -123,3 +123,77 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           command: fmt
           args: --all -- --check
+
+  # verify that tests pass and calculate coverage with tarpaulin
+  cargo-test-coverage:
+    name: Run cargo tarpaulin
+    needs: [skip-commit]
+    runs-on: ubuntu-latest
+    env:
+      RUST_TOOLCHAIN: nightly
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          override: true
+      - name: Run cargo xtask init
+        uses: actions-rs/cargo@v1
+        with:
+          command: xtask
+          args: init --with-corpus
+      - name: Fetch latest release version of cargo-tarpaulin
+        run: |
+          mkdir -p .github/caching
+          curl -sL https://api.github.com/repos/xd009642/tarpaulin/releases/latest | jq -r '.name' > .github/caching/cargo-tarpaulin.lock
+      - name: Cache cargo-tarpaulin/bin
+        id: cache-cargo-tarpaulin
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/cargo-tarpaulin/bin
+          key: cargo-tarpaulin-bin-${{ hashFiles('.github/caching/cargo-tarpaulin.lock') }}
+      - name: Install cargo-tarpaulin
+        if: "steps.cache-cargo-tarpaulin.outputs.cache-hit != 'true'"
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --root ${{ runner.tool_cache }}/cargo-tarpaulin --force cargo-tarpaulin
+      - run: echo "${{ runner.tool_cache }}/cargo-tarpaulin/bin" >> $GITHUB_PATH
+      - name: Run cargo xtask tarpaulin
+        uses: actions-rs/cargo@v1
+        with:
+          command: xtask
+          args: tarpaulin
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+  # verify that tests pass
+  cargo-test:
+    name: Run cargo test
+    needs: [skip-commit]
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        runtime: [smol, tokio]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+      - name: Run cargo xtask init
+        uses: actions-rs/cargo@v1
+        with:
+          command: xtask
+          args: init --with-corpus
+      - name: Run cargo xtask test
+        uses: actions-rs/cargo@v1
+        with:
+          command: xtask
+          args: test --runtime=${{ matrix.runtime }}
