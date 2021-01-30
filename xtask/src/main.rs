@@ -1,19 +1,7 @@
-//! Cargo xtask definitions for the ddlog-lsp-server project.
-
 #![deny(clippy::all)]
-#![deny(missing_docs)]
 #![deny(unsafe_code)]
 
 type Fallible<T> = Result<T, Box<dyn std::error::Error>>;
-
-fn rest(input: &str) -> Fallible<Vec<String>> {
-    Ok(input
-        .trim_start_matches('\'')
-        .trim_end_matches('\'')
-        .split_whitespace()
-        .map(String::from)
-        .collect())
-}
 
 fn main() -> Fallible<()> {
     let help = r#"
@@ -26,11 +14,12 @@ FLAGS:
     -h, --help          Prints help information
 
 SUBCOMMANDS:
+    build
     check
     clippy
     doc
     format
-    help                Prints this message or the help of the given subcommand(s)
+    help                Prints this message or the help of the subcommand(s)
     init
     install
     tarpaulin
@@ -39,62 +28,47 @@ SUBCOMMANDS:
 "#
     .trim();
 
-    let mut args = pico_args::Arguments::from_env();
-    match args.subcommand()?.as_deref() {
-        Some("check") => {
-            subcommand::cargo::check(args)?;
-            return Ok(());
-        },
-        Some("clippy") => {
-            subcommand::cargo::clippy(args)?;
-            return Ok(());
-        },
-        Some("doc") => {
-            subcommand::cargo::doc(args)?;
-            return Ok(());
-        },
-        Some("format") => {
-            subcommand::cargo::format(args)?;
-            return Ok(());
-        },
-        Some("help") => {
-            println!("{}\n", help);
-            return Ok(());
-        },
-        Some("init") => {
-            subcommand::init(args)?;
-            return Ok(());
-        },
-        Some("install") => {
-            subcommand::cargo::install(args)?;
-            return Ok(());
-        },
-        Some("tarpaulin") => {
-            subcommand::cargo::tarpaulin(args)?;
-            return Ok(());
-        },
-        Some("test") => {
-            subcommand::cargo::test(args)?;
-            return Ok(());
-        },
-        Some("udeps") => {
-            subcommand::cargo::udeps(args)?;
-            return Ok(());
-        },
-        Some(subcommand) => {
-            return Err(format!("unknown subcommand: {}", subcommand).into());
-        },
+    let mut args: Vec<_> = std::env::args_os().collect();
+    // remove "xtask" argument
+    args.remove(0);
+
+    let cargo_args = if let Some(dash_dash) = args.iter().position(|arg| arg == "--") {
+        let c = args.drain(dash_dash + 1 ..).collect();
+        args.pop();
+        c
+    } else {
+        Vec::new()
+    };
+
+    let mut args = pico_args::Arguments::from_vec(args);
+
+    let result = match args.subcommand()?.as_deref() {
         None => {
             if args.contains(["-h", "--help"]) {
                 println!("{}\n", help);
-                return Ok(());
             }
+            Ok(())
         },
-    }
+        Some("build") => subcommand::cargo::build(&mut args, cargo_args),
+        Some("check") => subcommand::cargo::check(&mut args, cargo_args),
+        Some("clippy") => subcommand::cargo::clippy(&mut args, cargo_args),
+        Some("doc") => subcommand::cargo::doc(&mut args, cargo_args),
+        Some("format") => subcommand::cargo::format(&mut args, cargo_args),
+        Some("init") => subcommand::init(&mut args),
+        Some("install") => subcommand::cargo::install(&mut args, cargo_args),
+        Some("tarpaulin") => subcommand::cargo::tarpaulin(&mut args, cargo_args),
+        Some("test") => subcommand::cargo::test(&mut args, cargo_args),
+        Some("udeps") => subcommand::cargo::udeps(&mut args, cargo_args),
+        Some("help") => {
+            println!("{}\n", help);
+            Ok(())
+        },
+        Some(subcommand) => Err(format!("unknown subcommand: {}", subcommand).into()),
+    };
+    crate::util::handle_result(result);
 
-    if let Err(pico_args::Error::UnusedArgsLeft(args)) = args.finish() {
-        return Err(format!("unrecognized arguments: {}", args.join(" ")).into());
-    }
+    let result = crate::util::handle_unused(&args);
+    crate::util::handle_result(result);
 
     Ok(())
 }
@@ -122,8 +96,46 @@ mod subcommand {
         use crate::metadata;
         use std::process::Command;
 
-        // Run `cargo check` with custom options.
-        pub fn check(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn build(args: &mut pico_args::Arguments, mut cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
+            let help = r#"
+xtask-build
+
+USAGE:
+    xtask build
+
+FLAGS:
+    -h, --help          Prints help information
+    --rebuild-parsers   Rebuild tree-sitter parsers
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
+"#
+            .trim();
+
+            if args.contains(["-h", "--help"]) {
+                println!("{}\n", help);
+                return Ok(());
+            }
+
+            if args.contains("--rebuild-parsers") {
+                crate::util::tree_sitter::rebuild_parsers()?;
+            }
+
+            let toolchain = crate::util::configure_runtime("build", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
+            let cargo = metadata::cargo()?;
+            let mut cmd = Command::new(cargo);
+            cmd.current_dir(metadata::project_root());
+            cmd.args(toolchain);
+            cmd.args(&["build"]);
+            cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(cargo_args);
+            cmd.status()?;
+
+            Ok(())
+        }
+
+        pub fn check(args: &mut pico_args::Arguments, mut cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-check
 
@@ -132,7 +144,8 @@ USAGE:
 
 FLAGS:
     -h, --help          Prints help information
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -141,23 +154,28 @@ FLAGS:
                 return Ok(());
             }
 
+            let toolchain = crate::util::configure_runtime("check", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
             cmd.env("RUSTFLAGS", "-Dwarnings");
-            cmd.args(&["check", "--all-targets"]);
+            cmd.args(toolchain);
+            cmd.args(&["check"]);
+            cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
-            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-parsers"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(cargo_args);
             cmd.status()?;
+
             Ok(())
         }
 
-        // Run `cargo clippy` with custom options.
-        pub fn clippy(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn clippy(args: &mut pico_args::Arguments, mut cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-clippy
 
@@ -166,7 +184,8 @@ USAGE:
 
 FLAGS:
     -h, --help          Prints help information
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -175,23 +194,27 @@ FLAGS:
                 return Ok(());
             }
 
+            crate::util::configure_runtime("clippy", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
-            cmd.args(&["clippy", "--all-targets"]);
+            cmd.args(&["+nightly", "clippy"]);
+            cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
-            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-parsers"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(cargo_args);
             cmd.args(&["--", "-D", "warnings"]);
             cmd.status()?;
+
             Ok(())
         }
 
-        // Run `cargo doc` with custom options.
-        pub fn doc(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn doc(args: &mut pico_args::Arguments, cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-doc
 
@@ -200,7 +223,7 @@ USAGE:
 
 FLAGS:
     -h, --help          Prints help information
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -209,19 +232,19 @@ FLAGS:
                 return Ok(());
             }
 
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
             cmd.args(&["+nightly", "doc"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(cargo_args);
             cmd.status()?;
+
             Ok(())
         }
 
-        // Run `cargo format` with custom options.
-        pub fn format(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn format(args: &mut pico_args::Arguments, cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-format
 
@@ -230,7 +253,7 @@ USAGE:
 
 FLAGS:
     -h, --help          Prints help information
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -239,19 +262,22 @@ FLAGS:
                 return Ok(());
             }
 
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
             cmd.args(&["+nightly", "fmt", "--all"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(cargo_args);
             cmd.status()?;
+
             Ok(())
         }
 
-        // Run `cargo install` with custom options.
-        pub fn install(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn install(
+            args: &mut pico_args::Arguments,
+            mut cargo_args: Vec<std::ffi::OsString>,
+        ) -> crate::Fallible<()> {
             let help = r#"
 xtask-install
 
@@ -261,7 +287,8 @@ USAGE:
 FLAGS:
     -h, --help          Prints help information
     --rebuild-parsers   Rebuild tree-sitter parsers
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -274,20 +301,28 @@ FLAGS:
                 crate::util::tree_sitter::rebuild_parsers()?;
             }
 
+            let toolchain = crate::util::configure_runtime("install", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
-            cmd.current_dir(metadata::project_root());
-            cmd.args(&["install", "--path", "crates/server"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            let mut path = metadata::project_root();
+            path.push("crates");
+            path.push("cli");
+            cmd.current_dir(path);
+            cmd.args(toolchain);
+            cmd.args(&["install"]);
+            cmd.args(&["--path", "."]);
+            cmd.args(cargo_args);
             cmd.status()?;
 
             Ok(())
         }
 
-        // Run `cargo tarpaulin` with custom options.
-        pub fn tarpaulin(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn tarpaulin(
+            args: &mut pico_args::Arguments,
+            mut cargo_args: Vec<std::ffi::OsString>,
+        ) -> crate::Fallible<()> {
             let help = r#"
 xtask-tarpaulin
 
@@ -297,7 +332,8 @@ USAGE:
 FLAGS:
     -h, --help          Prints help information
     --rebuild-parsers   Rebuild tree-sitter parsers
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -310,35 +346,40 @@ FLAGS:
                 crate::util::tree_sitter::rebuild_parsers()?;
             }
 
+            crate::util::configure_runtime("tarpaulin", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
             cmd.args(&["+nightly", "tarpaulin"]);
-            cmd.args(&["-Zpackage-features"]);
             cmd.args(&["--out", "Xml"]);
-            cmd.args(&["--packages", "xtask", "ddlog-lsp-server", "ddlog-lsp-parsers"]);
+            cmd.args(&[
+                "--packages",
+                "xtask",
+                "ddlog-lsp-cli",
+                "ddlog-lsp-macros",
+                "ddlog-lsp-parsers",
+                "ddlog-lsp-server",
+            ]);
             cmd.args(&[
                 "--exclude-files",
                 "xtask",
                 "crates/macros",
                 "crates/server/src/bin",
                 "crates/server/src/cli.rs",
-                "crates/testing",
                 "tests",
                 "vendor",
                 "**/stdio2.h",
                 "**/string_fortified.h",
             ]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(cargo_args);
             cmd.status()?;
 
             Ok(())
         }
 
-        // Run `cargo test` with custom options.
-        pub fn test(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn test(args: &mut pico_args::Arguments, mut cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-test
 
@@ -348,7 +389,8 @@ USAGE:
 FLAGS:
     -h, --help          Prints help information
     --rebuild-parsers   Rebuild tree-sitter parsers
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -361,24 +403,28 @@ FLAGS:
                 crate::util::tree_sitter::rebuild_parsers()?;
             }
 
+            let toolchain = crate::util::configure_runtime("test", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
             cmd.env("RUSTFLAGS", "-Dwarnings");
-            cmd.args(&["test", "--examples", "--lib", "--tests"]);
+            cmd.args(toolchain);
+            cmd.args(&["test"]);
+            cmd.args(&["--examples", "--lib", "--tests"]);
             cmd.args(&["--package", "xtask"]);
-            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-parsers"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(cargo_args);
             cmd.status()?;
 
             Ok(())
         }
 
-        // Run `cargo udeps` with custom options.
-        pub fn udeps(mut args: pico_args::Arguments) -> crate::Fallible<()> {
+        pub fn udeps(args: &mut pico_args::Arguments, mut cargo_args: Vec<std::ffi::OsString>) -> crate::Fallible<()> {
             let help = r#"
 xtask-udep
 
@@ -387,7 +433,8 @@ USAGE:
 
 FLAGS:
     -h, --help          Prints help information
-    --rest '...'        Extra arguments to pass to the underlying cargo command
+    --runtime=<arg>     Choice of runtime: agnostic, smol, tokio (default)
+    -- '...'            Extra arguments to pass to the cargo command
 "#
             .trim();
 
@@ -396,32 +443,34 @@ FLAGS:
                 return Ok(());
             }
 
+            crate::util::configure_runtime("udep", args, &mut cargo_args)?;
+            crate::util::handle_unused(args)?;
+
             let cargo = metadata::cargo()?;
             let mut cmd = Command::new(cargo);
             cmd.current_dir(metadata::project_root());
-            cmd.args(&["+nightly", "udeps", "--all-targets", "--all-features"]);
+            cmd.args(&["+nightly", "udeps"]);
+            cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
-            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-parsers"]);
-            if let Some(values) = args.opt_value_from_fn("--rest", crate::rest)? {
-                cmd.args(values);
-            }
+            cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(cargo_args);
             cmd.status()?;
+
             Ok(())
         }
     }
 
-    use crate::metadata;
-    use std::{path::Path, process::Command};
+    pub fn init(args: &mut pico_args::Arguments) -> crate::Fallible<()> {
+        use crate::metadata;
+        use std::{path::Path, process::Command};
 
-    // Initialize submodules (e.g., for tree-sitter grammars and test suites)
-    pub fn init(mut args: pico_args::Arguments) -> crate::Fallible<()> {
         let help = r#"
 xtask-init
-
 USAGE:
     xtask init
-
 FLAGS:
     -h, --help          Prints help information
 "#
@@ -439,29 +488,75 @@ FLAGS:
         cmd.args(&["submodule", "update", "--init", "--depth", "1", "--", submodule]);
         cmd.status()?;
 
-        if args.contains("--with-corpus") {
-            // // initialize "vendor/corpus" submodule
-            // let submodule = Path::new("vendor/corpus").to_str().unwrap();
-            // let mut cmd = Command::new("git");
-            // cmd.current_dir(metadata::project_root());
-            // cmd.args(&["submodule", "update", "--init", "--depth", "1", "--", submodule]);
-            // cmd.status()?;
-
-            // // initialize "vendor/corpus/..." submodules
-            // let mut cmd = Command::new("git");
-            // let root = metadata::project_root();
-            // let root = root.to_str().unwrap();
-            // let path = [root, "vendor", "corpus"].iter().collect::<PathBuf>();
-            // cmd.current_dir(path);
-            // cmd.args(&["submodule", "update", "--init", "--depth", "1"]);
-            // cmd.status()?;
-        }
-
         Ok(())
     }
 }
 
 mod util {
+    pub(super) fn handle_result<T>(result: crate::Fallible<T>) {
+        if let Err(err) = result {
+            println!("Error :: {}", err);
+            std::process::exit(1);
+        }
+    }
+
+    pub(super) fn handle_unused(args: &pico_args::Arguments) -> crate::Fallible<()> {
+        use std::borrow::Borrow;
+        let unused = args.clone().finish();
+        if !unused.is_empty() {
+            let mut message = String::new();
+            for str in unused {
+                message.push(' ');
+                message.push_str(str.to_string_lossy().borrow());
+            }
+            Err(format!("unrecognized arguments '{}'", message).into())
+        } else {
+            Ok(())
+        }
+    }
+
+    pub(super) fn configure_runtime(
+        command_name: &str,
+        args: &mut pico_args::Arguments,
+        cargo_args: &mut Vec<std::ffi::OsString>,
+    ) -> crate::Fallible<Vec<String>> {
+        let mut toolchain = vec![];
+        if let Some(arg) = args.opt_value_from_str::<_, std::ffi::OsString>("--runtime")? {
+            if command_name == "install" {
+                if arg == "futures" {
+                    let features = vec!["runtime-futures"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                } else if arg == "smol" {
+                    let features = vec!["runtime-smol"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                } else if arg == "tokio" {
+                } else {
+                    return Err(format!("unexpected runtime '{}'", arg.to_string_lossy()).into());
+                }
+            }
+            if command_name != "install" {
+                if arg == "futures" {
+                    let features = vec!["ddlog-lsp-cli/runtime-futures", "ddlog-lsp-server/runtime-agnostic"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                    toolchain.push(String::from("+nightly"));
+                } else if arg == "smol" {
+                    let features = vec!["ddlog-lsp-cli/runtime-smol", "ddlog-lsp-server/runtime-agnostic"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                    toolchain.push(String::from("+nightly"));
+                } else if arg == "tokio" {
+                } else {
+                    return Err(format!("unexpected runtime '{}'", arg.to_string_lossy()).into());
+                }
+            }
+        }
+
+        Ok(toolchain)
+    }
+
     pub mod tree_sitter {
         use crate::metadata;
         use std::{
@@ -476,7 +571,7 @@ mod util {
             let root_path = root_path.to_str().unwrap();
 
             // Configure the tree-sitter directory path.
-            let tree_sitter_path = [root_path, "vendor", "tree-sitter-ddlog"].iter().collect::<PathBuf>();
+            let tree_sitter_path = [root_path, "vendor", "tree-sitter-wasm"].iter().collect::<PathBuf>();
             let tree_sitter_path = tree_sitter_path.to_str().unwrap();
 
             // Configure the tree-sitter cli binary path.
@@ -514,7 +609,7 @@ mod util {
             }
 
             // Iterate through the different grammar types.
-            for grammar in &["ddlog/dat", "ddlog/dl"] {
+            for grammar in &["wast", "wat"] {
                 // Configure the grammar directory path.
                 let grammar_path = [tree_sitter_path, grammar].iter().collect::<PathBuf>();
                 let grammar_path = dunce::canonicalize(grammar_path)?;

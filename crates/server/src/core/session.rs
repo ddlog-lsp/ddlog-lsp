@@ -1,58 +1,127 @@
-//! Core functionality related to the LSP server session.
-
-use crate::core::{document::Document, error::Error};
+use crate::{core, server};
 use dashmap::{
     mapref::one::{Ref, RefMut},
     DashMap,
 };
-use tower_lsp::{lsp_types::*, Client};
 
-/// Represents the current state of the LSP service.
-#[allow(unused)]
+#[cfg(feature = "runtime-agnostic")]
+use async_lock::{Mutex, RwLock};
+#[cfg(feature = "tokio")]
+use tokio::sync::{Mutex, RwLock};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SessionResourceKind {
+    Document,
+    Parser,
+    Tree,
+}
+
 pub struct Session {
-    /// The LSP client handle.
-    client: Option<Client>,
-    /// The store of currently open documents.
-    documents: DashMap<Url, Document>,
+    pub server_capabilities: RwLock<lsp::ServerCapabilities>,
+    pub client_capabilities: RwLock<Option<lsp::ClientCapabilities>>,
+    client: Option<lspower::Client>,
+    texts: DashMap<lsp::Url, core::Text>,
+    pub parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
+    pub trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
 }
 
 impl Session {
-    /// Create a new session.
-    pub fn new(client: Option<Client>) -> anyhow::Result<Self> {
-        let documents = DashMap::new();
-        Ok(Session { client, documents })
+    pub fn new(client: Option<lspower::Client>) -> anyhow::Result<Self> {
+        let server_capabilities = RwLock::new(server::capabilities());
+        let client_capabilities = RwLock::new(Default::default());
+        let texts = DashMap::new();
+        let parsers = DashMap::new();
+        let trees = DashMap::new();
+        Ok(Session {
+            server_capabilities,
+            client_capabilities,
+            client,
+            texts,
+            parsers,
+            trees,
+        })
     }
 
-    #[allow(unused)]
-    pub(crate) fn client(&self) -> anyhow::Result<&Client> {
-        self.client.as_ref().ok_or_else(|| Error::ClientNotInitialized.into())
+    pub fn client(&self) -> anyhow::Result<&lspower::Client> {
+        self.client
+            .as_ref()
+            .ok_or_else(|| core::Error::ClientNotInitialized.into())
     }
 
-    /// Insert an opened document into the session. Updates the documents hashmap and sets the
-    /// document status in the database to "opened". Notifies subscribers to the document status.
-    pub fn insert_document(&self, uri: Url, document: Document) -> anyhow::Result<Option<Document>> {
-        let result = self.documents.insert(uri, document);
-        Ok(result)
+    pub fn insert_document(&self, uri: lsp::Url, document: core::Document) -> anyhow::Result<()> {
+        let result = self.texts.insert(uri.clone(), document.text());
+        debug_assert!(result.is_none());
+        let result = self.parsers.insert(uri.clone(), Mutex::new(document.parser));
+        debug_assert!(result.is_none());
+        let result = self.trees.insert(uri, Mutex::new(document.tree));
+        debug_assert!(result.is_none());
+        Ok(())
     }
 
-    /// Remove a closed document from the session. Updates the documents hashmap and sets the
-    /// document status in the database to "closed". Notifies subscribers to the document status.
-    pub fn remove_document(&self, uri: &Url) -> anyhow::Result<Option<(Url, Document)>> {
-        let result = self.documents.remove(uri);
-        Ok(result)
+    pub fn remove_document(&self, uri: &lsp::Url) -> anyhow::Result<()> {
+        let result = self.texts.remove(uri);
+        debug_assert!(result.is_some());
+        let result = self.parsers.remove(uri);
+        debug_assert!(result.is_some());
+        let result = self.trees.remove(uri);
+        debug_assert!(result.is_some());
+        Ok(())
     }
 
-    /// Get a reference to a document associated with the session, if possible.
-    pub async fn get_document(&self, uri: &Url) -> anyhow::Result<Ref<'_, Url, Document>> {
-        self.documents
-            .get(uri)
-            .ok_or_else(|| Error::DocumentNotFound(uri.clone()).into())
+    pub async fn semantic_tokens_legend(&self) -> Option<lsp::SemanticTokensLegend> {
+        let capabilities = self.server_capabilities.read().await;
+        if let Some(capabilities) = &capabilities.semantic_tokens_provider {
+            match capabilities {
+                lsp::SemanticTokensServerCapabilities::SemanticTokensOptions(options) => Some(options.legend.clone()),
+                lsp::SemanticTokensServerCapabilities::SemanticTokensRegistrationOptions(options) => {
+                    Some(options.semantic_tokens_options.legend.clone())
+                },
+            }
+        } else {
+            None
+        }
     }
 
-    /// Get a mutable reference to a document associated with the session, if possible.
-    pub async fn get_mut_document(&self, uri: &Url) -> anyhow::Result<RefMut<'_, Url, Document>> {
-        self.documents
-            .get_mut(uri)
-            .ok_or_else(|| Error::DocumentNotFound(uri.clone()).into())
+    pub async fn get_text(&self, uri: &lsp::Url) -> anyhow::Result<Ref<'_, lsp::Url, core::Text>> {
+        self.texts.get(uri).ok_or_else(|| {
+            let kind = SessionResourceKind::Document;
+            let uri = uri.clone();
+            core::Error::SessionResourceNotFound { kind, uri }.into()
+        })
+    }
+
+    pub async fn get_mut_text(&self, uri: &lsp::Url) -> anyhow::Result<RefMut<'_, lsp::Url, core::Text>> {
+        self.texts.get_mut(uri).ok_or_else(|| {
+            let kind = SessionResourceKind::Document;
+            let uri = uri.clone();
+            core::Error::SessionResourceNotFound { kind, uri }.into()
+        })
+    }
+
+    pub async fn get_mut_parser(
+        &self,
+        uri: &lsp::Url,
+    ) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Parser>>> {
+        self.parsers.get_mut(uri).ok_or_else(|| {
+            let kind = SessionResourceKind::Parser;
+            let uri = uri.clone();
+            core::Error::SessionResourceNotFound { kind, uri }.into()
+        })
+    }
+
+    pub async fn get_tree(&self, uri: &lsp::Url) -> anyhow::Result<Ref<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
+        self.trees.get(uri).ok_or_else(|| {
+            let kind = SessionResourceKind::Tree;
+            let uri = uri.clone();
+            core::Error::SessionResourceNotFound { kind, uri }.into()
+        })
+    }
+
+    pub async fn get_mut_tree(&self, uri: &lsp::Url) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
+        self.trees.get_mut(uri).ok_or_else(|| {
+            let kind = SessionResourceKind::Tree;
+            let uri = uri.clone();
+            core::Error::SessionResourceNotFound { kind, uri }.into()
+        })
     }
 }

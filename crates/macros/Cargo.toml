@@ -2,10 +2,11 @@
 edition = "2018"
 name = "ddlog-lsp-macros"
 version = "0.0.0"
-authors = ["Darin Morrison <darinmorrison@users.noreply.github.com>"]
+authors = ["hvithrafn <hvithrafn@users.noreply.github.com>"]
 license = "Apache-2.0 WITH LLVM-exception"
 readme = "README.md"
 repository = "https://github.com/ddlog-lsp/ddlog-lsp"
+keywords = []
 description = """
 Internal macros for the DDlog language server implementation.
 """

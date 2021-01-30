@@ -1,34 +1,65 @@
-//! Core functionality related to documents.
+use crate::core::{self, RopeExt};
+use std::{convert::TryFrom, sync::Arc};
 
-use crate::core::language::Language;
-use std::convert::TryFrom;
+#[cfg(feature = "runtime-agnostic")]
+use async_lock::Mutex;
+#[cfg(feature = "runtime-tokio")]
 use tokio::sync::Mutex;
-use tree_sitter::{Parser, Tree};
 
-/// The current state of a document.
 pub struct Document {
-    /// The language type of the document, e.g., "ddlog.dl"
-    pub language: Language,
-    /// The tree-sitter parser state for the document.
-    pub parser: Mutex<Parser>,
-    /// The current text of the document.
-    pub text: String,
-    /// The current tree-sitter parse tree of the document.
-    pub tree: Mutex<Tree>,
+    pub language: core::Language,
+    pub content: ropey::Rope,
+    pub parser: tree_sitter::Parser,
+    pub tree: tree_sitter::Tree,
 }
 
 impl Document {
-    /// Create a new Document for the given `language_id` and `text`.
-    pub fn new(language_id: &str, text: String) -> anyhow::Result<Option<Self>> {
-        let language = Language::try_from(language_id)?;
+    pub fn open(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Option<Self>> {
+        let language = core::Language::try_from(params.text_document.language_id.as_str())?;
         let mut parser = tree_sitter::Parser::try_from(language)?;
-        let old_tree = None;
-        let document = parser.parse(&text[..], old_tree).map(|tree| Document {
+        let content = ropey::Rope::from(params.text_document.text);
+        let result = {
+            let content = content.clone();
+            let byte_idx = 0;
+            let callback = content.chunk_walker(byte_idx).callback_adapter();
+            let old_tree = None;
+            parser.parse_with(callback, old_tree)?
+        };
+        Ok(result.map(|tree| core::Document {
             language,
-            parser: Mutex::new(parser),
-            text,
-            tree: Mutex::new(tree),
-        });
-        Ok(document)
+            content,
+            parser,
+            tree,
+        }))
+    }
+
+    pub async fn change(session: Arc<core::Session>, uri: &lsp::Url) -> anyhow::Result<Option<tree_sitter::Tree>> {
+        let result = {
+            let text = session.get_text(uri).await?;
+            let parser = session.get_mut_parser(uri).await?;
+            let mut parser = parser.lock().await;
+            parser.reset();
+            let content = text.content.clone();
+            let callback = content.chunk_walker(0).callback_adapter();
+            let old_tree = None;
+            parser.parse_with(callback, old_tree)?
+        };
+
+        if let Some(tree) = result {
+            {
+                let tree = tree.clone();
+                *session.get_mut_tree(uri).await?.value_mut() = Mutex::new(tree);
+            }
+            Ok(Some(tree))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn text(&self) -> core::Text {
+        core::Text {
+            language: self.language,
+            content: self.content.clone(),
+        }
     }
 }

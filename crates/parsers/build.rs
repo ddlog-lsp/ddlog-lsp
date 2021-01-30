@@ -1,6 +1,6 @@
 use std::path::Path;
 
-fn compile_tree_sitter_grammars() -> anyhow::Result<()> {
+fn compile_tree_sitter_grammars() {
     let dir = Path::new("../../vendor/tree-sitter-ddlog");
 
     println!("cargo:rerun-if-changed={:?}", dir.join("ddlog/dat/src/parser.c"));
@@ -8,6 +8,7 @@ fn compile_tree_sitter_grammars() -> anyhow::Result<()> {
     cc.include(dir.join("ddlog/dat/src"));
     cc.file(dir.join("ddlog/dat/src/parser.c"));
     cc.file(dir.join("ddlog/dat/src/scanner.cc"));
+    cc.flag_if_supported("-Wno-maybe-uninitialized");
     cc.flag_if_supported("-Wno-unused-but-set-variable");
     cc.compile("tree-sitter-ddlog-dat");
 
@@ -16,13 +17,14 @@ fn compile_tree_sitter_grammars() -> anyhow::Result<()> {
     cc.include(dir.join("ddlog/dl/src"));
     cc.file(dir.join("ddlog/dl/src/parser.c"));
     cc.file(dir.join("ddlog/dl/src/scanner.cc"));
+    cc.flag_if_supported("-Wno-maybe-uninitialized");
     cc.flag_if_supported("-Wno-unused-but-set-variable");
     cc.compile("tree-sitter-ddlog-dl");
-
-    Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
-    compile_tree_sitter_grammars()?;
+    if std::env::var("CARGO_CFG_TARGET_ARCH")? != "wasm32" {
+        compile_tree_sitter_grammars();
+    }
     Ok(())
 }

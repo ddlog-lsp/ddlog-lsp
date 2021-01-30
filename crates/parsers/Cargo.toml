@@ -2,10 +2,11 @@
 edition = "2018"
 name = "ddlog-lsp-parsers"
 version = "0.0.0"
-authors = ["Darin Morrison <darinmorrison@users.noreply.github.com>"]
+authors = ["hvithrafn <hvithrafn@users.noreply.github.com>"]
 license = "Apache-2.0 WITH LLVM-exception"
 readme = "README.md"
 repository = "https://github.com/ddlog-lsp/ddlog-lsp"
+keywords = []
 description = """
 Tree-sitter parsers for the DDlog language server.
 """
@@ -19,6 +20,25 @@ cc = "1.0"
 
 [dependencies]
 anyhow = "1.0"
-thiserror = "1.0"
 lazy_static = "1.4"
-tree-sitter = "0.17"
+thiserror = "1.0"
+
+[dependencies.tree-sitter]
+package = "tree-sitter-facade"
+git = "https://github.com/hvithrafn/tree-sitter-facade"
+branch = "main"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.tree-sitter-sys]
+package = "tree-sitter"
+version = "0.17"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "=0.2.70", features = ["strict-macro"] }
+wasm-bindgen-futures = "0.4"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.futures]
+package = "futures-lite"
+version = "1.11"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies.web-tree-sitter-sys]
+version = "0.1.0"

@@ -1,26 +1,21 @@
 //! Core functionality related to document parsers.
 
-// FIXME: move these to a subcrate
-
-use crate::core::{
-    error::Error,
-    language::{self, Language},
-};
+use crate::core::language::{self, Language};
 use std::convert::TryFrom;
 
 /// Create a `.dat` parser from the tree-sitter grammar.
 pub fn dat() -> anyhow::Result<tree_sitter::Parser> {
     let language = language::dat::language();
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(language).map_err(Error::TreeSitterLanguageError)?;
+    let mut parser = tree_sitter::Parser::new()?;
+    parser.set_language(&language)?;
     Ok(parser)
 }
 
 /// Create a `.dl` parser from the tree-sitter grammar.
 pub fn dl() -> anyhow::Result<tree_sitter::Parser> {
     let language = language::dl::language();
-    let mut parser = tree_sitter::Parser::new();
-    parser.set_language(language).map_err(Error::TreeSitterLanguageError)?;
+    let mut parser = tree_sitter::Parser::new()?;
+    parser.set_language(&language)?;
     Ok(parser)
 }
 
