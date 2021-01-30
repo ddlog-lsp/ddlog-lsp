@@ -62,7 +62,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: init --with-corpus
+          args: init
       - name: Run cargo clippy
         uses: actions-rs/clippy-check@v1
         with:
@@ -93,7 +93,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: doc --rest='--all-features --no-deps --package ddlog-lsp-server'
+          args: doc -- --all-features --no-deps --package ddlog-lsp-server
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         name: Publish docs
         uses: peaceiris/actions-gh-pages@v3
