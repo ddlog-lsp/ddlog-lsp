@@ -93,7 +93,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: doc -- --all-features --no-deps --package ddlog-lsp-server
+          args: doc -- --no-deps --package ddlog-lsp-server
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         name: Publish docs
         uses: peaceiris/actions-gh-pages@v3
