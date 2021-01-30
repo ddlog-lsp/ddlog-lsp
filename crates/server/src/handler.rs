@@ -1,5 +1,5 @@
 pub mod text_document {
-    use crate::core::{self, TreeExt};
+    use crate::{core, provider};
     use std::sync::Arc;
 
     pub async fn did_change(
@@ -21,7 +21,7 @@ pub mod text_document {
         }
         let text = session.get_text(uri).await?;
         if let Some(tree) = core::Document::change(session.clone(), uri).await? {
-            let diagnostics = tree.diagnostics(&text.content);
+            let diagnostics = provider::diagnostics(&tree, &text.content);
             let version = Default::default();
             session
                 .client()?
@@ -46,7 +46,7 @@ pub mod text_document {
             let tree = document.tree.clone();
             let text = document.text();
             session.insert_document(uri.clone(), document)?;
-            let diagnostics = tree.diagnostics(&text.content);
+            let diagnostics = provider::diagnostics(&tree, &text.content);
             let version = Default::default();
             session.client()?.publish_diagnostics(uri, diagnostics, version).await;
         } else {

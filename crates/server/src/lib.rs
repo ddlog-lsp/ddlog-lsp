@@ -4,6 +4,7 @@
 pub mod core;
 pub mod handler;
 pub mod package;
-mod server;
+pub mod provider;
+pub mod server;
 
 pub use server::*;
