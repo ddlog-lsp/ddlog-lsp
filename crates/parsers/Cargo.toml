@@ -41,4 +41,5 @@ package = "futures-lite"
 version = "1.11"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-tree-sitter-sys]
-version = "0.1.0"
+git = "https://github.com/hvithrafn/web-tree-sitter-sys"
+branch = "main"

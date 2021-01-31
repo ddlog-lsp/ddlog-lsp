@@ -549,7 +549,7 @@ dependencies = [
  "tree-sitter-facade",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "web-tree-sitter-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "web-tree-sitter-sys",
 ]
 
 [[package]]
@@ -1749,7 +1749,7 @@ dependencies = [
  "tree-sitter",
  "wasm-bindgen",
  "web-sys",
- "web-tree-sitter-sys 0.1.0 (git+https://github.com/hvithrafn/web-tree-sitter-sys?branch=main)",
+ "web-tree-sitter-sys",
  "wee_alloc",
 ]
 
@@ -1973,19 +1973,7 @@ dependencies = [
 [[package]]
 name = "web-tree-sitter-sys"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc6ed401324d443bc19bc28c34dac11e6bc4d15c0a4cc2b1f0425ee8b3f19df"
-dependencies = [
- "js-sys",
- "wasm-bindgen",
- "web-sys",
- "wee_alloc",
-]
-
-[[package]]
-name = "web-tree-sitter-sys"
-version = "0.1.0"
-source = "git+https://github.com/hvithrafn/web-tree-sitter-sys?branch=main#76713438c65211f699551e5e0391a1278713d3ff"
+source = "git+https://github.com/hvithrafn/web-tree-sitter-sys?branch=main#0b555224b170b06665e7e54b2123b222d49d7dd1"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
