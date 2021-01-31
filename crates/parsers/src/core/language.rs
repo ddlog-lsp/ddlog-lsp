@@ -47,14 +47,15 @@ impl TryFrom<&Path> for Language {
 
 /// Functions for working with the `.dat` grammar.
 pub mod dat {
+    /// Tree-sitter language for the `.dat` grammar.
     #[cfg(not(target_arch = "wasm32"))]
     #[allow(unsafe_code)]
-    /// Tree-sitter language for the `.dat` grammar.
     pub fn language() -> tree_sitter::Language {
         let inner = unsafe { crate::tree_sitter_ddlog_dat() };
         inner.into()
     }
 
+    /// Tree-sitter language for the `.dat` grammar.
     #[cfg(target_arch = "wasm32")]
     pub fn language() -> tree_sitter::Language {
         use wasm_bindgen::JsCast;
@@ -78,6 +79,7 @@ pub mod dl {
         inner.into()
     }
 
+    /// Tree-sitter language for the `.dl` grammar.
     #[cfg(target_arch = "wasm32")]
     #[allow(unsafe_code)]
     pub fn language() -> tree_sitter::Language {
