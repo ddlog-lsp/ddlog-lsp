@@ -12,4 +12,4 @@ members = [
   "crates/server",
   "xtask",
 ]
-
+default-members = ["crates/cli"]
