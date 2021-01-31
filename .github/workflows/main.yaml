@@ -143,7 +143,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: init --with-corpus
+          args: init
       - name: Fetch latest release version of cargo-tarpaulin
         run: |
           mkdir -p .github/caching
@@ -191,7 +191,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: init --with-corpus
+          args: init
       - name: Run cargo xtask test
         uses: actions-rs/cargo@v1
         with:
