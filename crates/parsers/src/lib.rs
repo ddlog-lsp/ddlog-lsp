@@ -3,6 +3,7 @@
 #![deny(clippy::all)]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
+#![recursion_limit = "512"]
 
 // Core functionality for the DDlog language server.
 pub mod core;
