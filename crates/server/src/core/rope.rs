@@ -83,15 +83,42 @@ impl ChunkWalker {
 }
 
 pub trait RopeExt {
+    fn byte_to_lsp_position(&self, offset: usize) -> lsp::Position;
+    fn byte_to_tree_sitter_point(&self, offset: usize) -> tree_sitter::Point;
     fn chunk_walker(self, byte_idx: usize) -> ChunkWalker;
     fn lsp_position_to_byte(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range>;
-    fn byte_to_lsp_position(&self, offset: usize) -> lsp::Position;
-    fn byte_to_tree_sitter_point(&self, offset: usize) -> tree_sitter::Point;
 }
 
 impl RopeExt for Rope {
+    fn byte_to_lsp_position(&self, byte_idx: usize) -> lsp::Position {
+        let line_idx = self.byte_to_line(byte_idx);
+
+        let line_utf16_cu_idx = {
+            let char_idx = self.line_to_char(line_idx);
+            self.char_to_utf16_cu(char_idx)
+        };
+
+        let character_utf16_cu_idx = {
+            let char_idx = self.byte_to_char(byte_idx);
+            self.char_to_utf16_cu(char_idx)
+        };
+
+        let line = line_idx;
+        let character = character_utf16_cu_idx - line_utf16_cu_idx;
+
+        lsp::Position::new(line as u32, character as u32)
+    }
+
+    fn byte_to_tree_sitter_point(&self, byte_idx: usize) -> tree_sitter::Point {
+        let line_idx = self.byte_to_line(byte_idx);
+        let line_byte_idx = self.line_to_byte(line_idx);
+        let row = u32::try_from(line_idx).unwrap();
+        let column = u32::try_from(byte_idx - line_byte_idx).unwrap();
+        tree_sitter::Point::new(row, column)
+    }
+
     #[allow(unsafe_code)]
     fn chunk_walker(self, byte_idx: usize) -> ChunkWalker {
         let this: &'static Rope = unsafe { std::mem::transmute::<_, _>(&self) };
@@ -167,32 +194,5 @@ impl RopeExt for Rope {
         let end_point = &Default::default();
         let range = tree_sitter::Range::new(start_byte, end_byte, start_point, end_point);
         Ok(range)
-    }
-
-    fn byte_to_lsp_position(&self, byte_idx: usize) -> lsp::Position {
-        let line_idx = self.byte_to_line(byte_idx);
-
-        let line_utf16_cu_idx = {
-            let char_idx = self.line_to_char(line_idx);
-            self.char_to_utf16_cu(char_idx)
-        };
-
-        let character_utf16_cu_idx = {
-            let char_idx = self.byte_to_char(byte_idx);
-            self.char_to_utf16_cu(char_idx)
-        };
-
-        let line = line_idx;
-        let character = character_utf16_cu_idx - line_utf16_cu_idx;
-
-        lsp::Position::new(line as u32, character as u32)
-    }
-
-    fn byte_to_tree_sitter_point(&self, byte_idx: usize) -> tree_sitter::Point {
-        let line_idx = self.byte_to_line(byte_idx);
-        let line_byte_idx = self.line_to_byte(line_idx);
-        let row = u32::try_from(line_idx).unwrap();
-        let column = u32::try_from(byte_idx - line_byte_idx).unwrap();
-        tree_sitter::Point::new(row, column)
     }
 }
