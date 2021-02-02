@@ -27,7 +27,9 @@ pub mod field {
 
     use lazy_static::lazy_static;
 
-    lazy_static! {}
+    lazy_static! {
+        pub static ref IDENTIFIER: u16 = super::language().field_id_for_name("identifier").unwrap();
+    }
 }
 
 pub mod kind {
