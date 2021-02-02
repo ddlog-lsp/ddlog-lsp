@@ -37,7 +37,7 @@ pub(self) fn symbol_range<'tree>(
     let range = content.tree_sitter_range_to_lsp_range(node.range());
     let selection_range;
     if let Some(inner_node) = node.child_by_field_id(field_id) {
-        name = content.utf8_text_for_tree_sitter_node(node).into();
+        name = content.utf8_text_for_tree_sitter_node(&inner_node).into();
         selection_range = content.tree_sitter_range_to_lsp_range(inner_node.range());
     } else {
         name = format!("<{}@{}:{}>", name_hint, range.start.line + 1, range.start.character + 1);
