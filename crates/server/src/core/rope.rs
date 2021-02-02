@@ -89,6 +89,7 @@ pub trait RopeExt {
     fn lsp_position_to_byte(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range>;
+    fn tree_sitter_range_to_lsp_range(&self, range: tree_sitter::Range) -> lsp::Range;
 }
 
 impl RopeExt for Rope {
@@ -194,5 +195,11 @@ impl RopeExt for Rope {
         let end_point = &Default::default();
         let range = tree_sitter::Range::new(start_byte, end_byte, start_point, end_point);
         Ok(range)
+    }
+
+    fn tree_sitter_range_to_lsp_range(&self, range: tree_sitter::Range) -> lsp::Range {
+        let start = self.byte_to_lsp_position(range.start_byte() as usize);
+        let end = self.byte_to_lsp_position(range.end_byte() as usize);
+        lsp::Range::new(start, end)
     }
 }
