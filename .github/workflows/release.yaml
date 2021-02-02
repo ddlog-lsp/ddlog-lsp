@@ -57,7 +57,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: xtask
-          args: init --with-corpus
+          args: init
       - name: Run cargo xtask build
         uses: actions-rs/cargo@v1
         with:
