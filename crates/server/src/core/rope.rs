@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use bytes::Bytes;
 use ropey::{iter::Chunks, Rope};
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
 
 trait ChunkExt<'a> {
     fn next_str(&mut self) -> &'a str;
@@ -90,6 +90,7 @@ pub trait RopeExt {
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range>;
     fn tree_sitter_range_to_lsp_range(&self, range: tree_sitter::Range) -> lsp::Range;
+    fn utf8_text_for_tree_sitter_node<'rope, 'tree>(&'rope self, node: &tree_sitter::Node<'tree>) -> Cow<'rope, str>;
 }
 
 impl RopeExt for Rope {
@@ -201,5 +202,12 @@ impl RopeExt for Rope {
         let start = self.byte_to_lsp_position(range.start_byte() as usize);
         let end = self.byte_to_lsp_position(range.end_byte() as usize);
         lsp::Range::new(start, end)
+    }
+
+    fn utf8_text_for_tree_sitter_node<'rope, 'tree>(&'rope self, node: &tree_sitter::Node<'tree>) -> Cow<'rope, str> {
+        let start = self.byte_to_char(node.start_byte() as usize);
+        let end = self.byte_to_char(node.end_byte() as usize);
+        let slice = self.slice(start .. end);
+        slice.into()
     }
 }
