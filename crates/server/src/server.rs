@@ -65,4 +65,13 @@ impl lspower::LanguageServer for Server {
         let session = self.session.clone();
         handler::text_document::did_close(session, params).await.unwrap()
     }
+
+    async fn document_symbol(
+        &self,
+        params: lsp::DocumentSymbolParams,
+    ) -> jsonrpc::Result<Option<lsp::DocumentSymbolResponse>> {
+        let session = self.session.clone();
+        let result = handler::text_document::document_symbol(session, params).await;
+        Ok(result.map_err(core::IntoJsonRpcError)?)
+    }
 }
