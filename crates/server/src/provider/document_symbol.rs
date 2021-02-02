@@ -8,7 +8,7 @@ mod dl;
 
 #[derive(Clone, Debug)]
 pub(self) struct Data<'tree> {
-    pub node: &'tree tree_sitter::Node<'tree>,
+    pub node: tree_sitter::Node<'tree>,
     pub children_count: usize,
     pub kind: lsp::SymbolKind,
     pub name_hint: &'static str,
@@ -27,9 +27,9 @@ pub(self) struct SymbolRange {
     pub selection_range: lsp::Range,
 }
 
-pub(self) fn symbol_range<'tree>(
+pub(self) fn symbol_range(
     content: &ropey::Rope,
-    node: &tree_sitter::Node<'tree>,
+    node: tree_sitter::Node,
     name_hint: &'static str,
     field_id: u16,
 ) -> SymbolRange {

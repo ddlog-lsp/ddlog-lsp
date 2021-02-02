@@ -15,6 +15,8 @@ impl Server {
 }
 
 pub fn capabilities() -> lsp::ServerCapabilities {
+    let document_symbol_provider = Some(lsp::OneOf::Left(true));
+
     let text_document_sync = {
         let options = lsp::TextDocumentSyncOptions {
             open_close: Some(true),
@@ -25,6 +27,7 @@ pub fn capabilities() -> lsp::ServerCapabilities {
     };
 
     lsp::ServerCapabilities {
+        document_symbol_provider,
         text_document_sync,
         ..Default::default()
     }

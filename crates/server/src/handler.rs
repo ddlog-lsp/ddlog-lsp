@@ -56,9 +56,9 @@ pub mod text_document {
     }
 
     pub async fn document_symbol(
-        _session: Arc<core::Session>,
-        _params: lsp::DocumentSymbolParams,
+        session: Arc<core::Session>,
+        params: lsp::DocumentSymbolParams,
     ) -> anyhow::Result<Option<lsp::DocumentSymbolResponse>> {
-        todo!()
+        provider::document_symbol(session, params).await
     }
 }
