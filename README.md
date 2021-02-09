@@ -15,3 +15,55 @@
         /></a>
   </p>
 </div>
+
+## Status
+
+The server is still in an early state. It is usable but many advanced features have not yet been implemented.
+
+## Usage
+
+The server has not yet had a stable release. You can build and install it locally if you would like to experiment with it in the meantime.
+
+### Installing the Server
+
+#### Prebuilt Binaries
+
+The easiest way to install the server is to grab one of the prebuilt binaries under [releases](https://github.com/ddlog-lsp/ddlog-lsp/releases).
+
+#### Building from Source
+
+First ensure you have the [rust toolchain](https://rustup.rs/) installed, then proceed as follows:
+
+```bash
+git clone https://github.com/ddlog-lsp/ddlog-lsp
+cd ddlog-lsp
+cargo xtask init
+cargo xtask install
+```
+
+### Installing the Client Extension
+
+Once the server is installed you can install the Visual Studio Code [client extension](https://github.com/ddlog-lsp/vscode-ddlog).
+
+## Language Server Feature Support
+
+- 🗹 document parsing via [ddlog tree-sitter grammars](https://github.com/ddlog-lsp/tree-sitter-ddlog)
+- 🗹 document symbol provider
+- 🗹 syntax error diagnostics provider
+- 🗹 incremental document synchronization
+
+## Language Server Feature Roadmap
+
+- ☐ code action provider
+- ☐ code lens provider
+- ☐ completion provider
+- ☐ definition provider
+- ☐ document formatting (full and ranged) provider
+- ☐ document highlight provider
+- ☐ hover provider
+- ☐ references provider
+- ☐ semantic tokens provider
+- ☐ signature help provider
+- ☐ workspace symbol provider
+- ☐ implementation of the [Debug Adapter Protocol](https://microsoft.github.io/debug-adapter-protocol/)
+- ☐ document validation
