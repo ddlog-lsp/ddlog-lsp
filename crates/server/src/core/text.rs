@@ -42,8 +42,12 @@ impl Text {
 
         let start_byte = self.content.char_to_byte(start_char_idx);
         let old_end_byte = {
-            let end_char = self.content.char(end_char_idx);
-            self.content.char_to_byte(end_char_idx) + end_char.len_utf8()
+            if end_char_idx == self.content.len_chars() {
+                self.content.len_bytes()
+            } else {
+                let end_char = self.content.char(end_char_idx);
+                self.content.char_to_byte(end_char_idx) + end_char.len_utf8()
+            }
         };
         let new_end_byte = start_byte + text_end_byte_idx;
 
