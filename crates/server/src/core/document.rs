@@ -41,7 +41,6 @@ impl Document {
         let result = {
             let parser = session.get_mut_parser(uri).await?;
             let mut parser = parser.lock().await;
-            parser.reset();
             let callback = {
                 let byte_idx = 0;
                 content.clone().chunk_walker(byte_idx).callback_adapter()
