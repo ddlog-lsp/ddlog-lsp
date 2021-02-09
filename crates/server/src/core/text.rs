@@ -30,59 +30,18 @@ impl Text {
             lsp::Range { start, end }
         };
 
-        let start_char_idx = {
-            let start_offset = self.content.lsp_position_to_utf16_cu(range.start)? as usize;
-            self.content.utf16_cu_to_char(start_offset)
-        };
+        let start = self.content.lsp_position_to_core(range.start)?;
+        let old_end = self.content.lsp_position_to_core(range.end)?;
 
-        let end_char_idx = {
-            let end_offset = self.content.lsp_position_to_utf16_cu(range.end)? as usize;
-            self.content.utf16_cu_to_char(end_offset)
-        };
-
-        let start_byte = self.content.char_to_byte(start_char_idx);
-        let old_end_byte = {
-            if end_char_idx == self.content.len_chars() {
-                self.content.len_bytes()
-            } else {
-                let end_char = self.content.char(end_char_idx);
-                self.content.char_to_byte(end_char_idx) + end_char.len_utf8()
-            }
-        };
-        let new_end_byte = start_byte + text_end_byte_idx;
-
-        let start_position = self.content.byte_to_tree_sitter_point(start_byte)?;
-        let old_end_position = self.content.byte_to_tree_sitter_point(old_end_byte)?;
-        let new_end_position = {
-            let mut last_line = change.text.as_str();
-            let mut line_count = 0;
-
-            for line in change.text.lines() {
-                last_line = line;
-                line_count += 1;
-            }
-
-            if !change.text.is_empty() {
-                line_count -= 1;
-            }
-
-            let row = start_position.row() + line_count;
-            let column = {
-                let padding = if line_count > 0 {
-                    0
-                } else {
-                    start_position.column() as usize
-                };
-                let result = padding + last_line.as_bytes().len();
-                u32::try_from(result).unwrap()
-            };
-            tree_sitter::Point::new(row, column)
-        };
+        let new_end_byte = start.byte as usize + text_end_byte_idx;
+        let new_end_position = self.content.byte_to_tree_sitter_point(new_end_byte)?;
 
         let input_edit = {
-            let start_byte = u32::try_from(start_byte).unwrap();
-            let old_end_byte = u32::try_from(old_end_byte).unwrap();
-            let new_end_byte = u32::try_from(new_end_byte).unwrap();
+            let start_byte = start.byte;
+            let old_end_byte = old_end.byte;
+            let new_end_byte = u32::try_from(new_end_byte)?;
+            let start_position = start.point;
+            let old_end_position = old_end.point;
             tree_sitter::InputEdit::new(
                 start_byte,
                 old_end_byte,
@@ -95,8 +54,8 @@ impl Text {
 
         Ok(TextEdit {
             input_edit,
-            start_char_idx,
-            end_char_idx,
+            start_char_idx: start.char as usize,
+            end_char_idx: old_end.char as usize,
             text,
         })
     }
@@ -107,6 +66,14 @@ impl Text {
             self.content.insert(edit.start_char_idx, &edit.text);
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Position {
+    pub char: u32,
+    pub byte: u32,
+    pub code: u32,
+    pub point: tree_sitter::Point,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

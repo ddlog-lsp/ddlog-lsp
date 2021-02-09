@@ -1,3 +1,4 @@
+use crate::core;
 use anyhow::anyhow;
 use bytes::Bytes;
 use ropey::{iter::Chunks, Rope};
@@ -86,7 +87,7 @@ pub trait RopeExt {
     fn byte_to_lsp_position(&self, offset: usize) -> lsp::Position;
     fn byte_to_tree_sitter_point(&self, offset: usize) -> anyhow::Result<tree_sitter::Point>;
     fn chunk_walker(self, byte_idx: usize) -> ChunkWalker;
-    fn lsp_position_to_tree_sitter(&self, position: lsp::Position) -> anyhow::Result<(u32, tree_sitter::Point)>;
+    fn lsp_position_to_core(&self, position: lsp::Position) -> anyhow::Result<core::Position>;
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range>;
     fn tree_sitter_range_to_lsp_range(&self, range: tree_sitter::Range) -> lsp::Range;
@@ -135,23 +136,31 @@ impl RopeExt for Rope {
         }
     }
 
-    fn lsp_position_to_tree_sitter(&self, position: lsp::Position) -> anyhow::Result<(u32, tree_sitter::Point)> {
-        let char_byte_idx = {
-            let utf16_cu_idx = position.character as usize;
-            let char_idx = self.utf16_cu_to_char(utf16_cu_idx);
-            self.char_to_byte(char_idx)
-        };
-        let byte = {
-            let line_idx = position.line as usize;
-            let line_byte_idx = self.line_to_byte(line_idx);
-            u32::try_from(line_byte_idx + char_byte_idx)?
-        };
+    fn lsp_position_to_core(&self, position: lsp::Position) -> anyhow::Result<core::Position> {
+        let row_idx = position.line as usize;
+
+        let col_code_idx = position.character as usize;
+
+        let row_char_idx = self.line_to_char(row_idx);
+        let col_char_idx = self.utf16_cu_to_char(col_code_idx);
+
+        let row_byte_idx = self.line_to_byte(row_idx);
+        let col_byte_idx = self.char_to_byte(col_char_idx);
+
+        let row_code_idx = self.char_to_utf16_cu(row_char_idx);
+
         let point = {
             let row = position.line;
-            let column = u32::try_from(char_byte_idx)?;
-            tree_sitter::Point::new(row, column)
+            let col = u32::try_from(col_byte_idx)?;
+            tree_sitter::Point::new(row, col)
         };
-        Ok((byte, point))
+
+        Ok(core::Position {
+            char: u32::try_from(row_char_idx + col_char_idx)?,
+            byte: u32::try_from(row_byte_idx + col_byte_idx)?,
+            code: u32::try_from(row_code_idx + col_code_idx)?,
+            point,
+        })
     }
 
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32> {
@@ -166,9 +175,9 @@ impl RopeExt for Rope {
     }
 
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range> {
-        let (start_byte, start_point) = self.lsp_position_to_tree_sitter(range.start)?;
-        let (end_byte, end_point) = self.lsp_position_to_tree_sitter(range.start)?;
-        let range = tree_sitter::Range::new(start_byte, end_byte, &start_point, &end_point);
+        let start = self.lsp_position_to_core(range.start)?;
+        let end = self.lsp_position_to_core(range.end)?;
+        let range = tree_sitter::Range::new(start.byte, end.byte, &start.point, &end.point);
         Ok(range)
     }
 
