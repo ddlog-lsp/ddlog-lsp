@@ -33,20 +33,29 @@ impl Document {
         }))
     }
 
-    pub async fn change(
+    pub async fn change<'changes>(
         session: Arc<core::Session>,
         uri: &lsp::Url,
         content: &ropey::Rope,
+        edits: &[core::TextEdit<'changes>],
     ) -> anyhow::Result<Option<tree_sitter::Tree>> {
         let result = {
             let parser = session.get_mut_parser(uri).await?;
             let mut parser = parser.lock().await;
+
             let callback = {
                 let byte_idx = 0;
                 content.clone().chunk_walker(byte_idx).callback_adapter()
             };
-            let old_tree = None;
-            parser.parse_with(callback, old_tree)?
+
+            let old_tree = session.get_mut_tree(uri).await?;
+            let mut old_tree = old_tree.lock().await;
+
+            for edit in edits {
+                old_tree.edit(&edit.input_edit);
+            }
+
+            parser.parse_with(callback, Some(&*old_tree))?
         };
 
         if let Some(tree) = result {

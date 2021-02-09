@@ -9,12 +9,17 @@ pub mod text_document {
         let uri = &params.text_document.uri;
         let mut text = session.get_mut_text(uri).await?;
 
-        for change in &params.content_changes {
-            let edit = text.build_edit(change)?;
-            text.apply_edit(&edit);
+        let edits = params
+            .content_changes
+            .iter()
+            .map(|change| text.build_edit(change))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        for edit in &edits {
+            text.apply_edit(edit);
         }
 
-        if let Some(tree) = core::Document::change(session.clone(), uri, &text.content).await? {
+        if let Some(tree) = core::Document::change(session.clone(), uri, &text.content, &edits).await? {
             let diagnostics = provider::diagnostics(&tree, &text.content);
             let version = Default::default();
             session
