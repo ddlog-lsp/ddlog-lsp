@@ -4,22 +4,30 @@ use crate::{
 };
 use std::sync::Arc;
 
+// Document symbol provider definitions for ".dl" files.
 pub async fn document_symbol(
     session: Arc<core::Session>,
     params: lsp::DocumentSymbolParams,
     content: &ropey::Rope,
 ) -> anyhow::Result<Option<lsp::DocumentSymbolResponse>> {
+    // Prepare the syntax tree.
     let tree = session.get_tree(&params.text_document.uri).await?;
     let tree = tree.lock().await;
     let node = tree.root_node();
 
+    // Vector to collect document symbols into as they are constructed.
     let mut syms: Vec<lsp::DocumentSymbol> = vec![];
 
+    // Prepare the stack machine:
+    //   data: contains data for constructing upcoming DocumentSymbols
+    //   work: contains remaining tree_sitter nodes to process
     let mut data: Vec<Data> = vec![];
     let mut work: Vec<Work> = vec![Work::Node(node)];
 
+    // The stack machine work loop.
     while let Some(next) = work.pop() {
         match next {
+            // Construct a DocumentSymbol and pop data stack
             Work::Data => {
                 if let Some(Data {
                     node,
@@ -39,6 +47,8 @@ pub async fn document_symbol(
                         children: if syms.is_empty() {
                             None
                         } else {
+                            // Drain the syms array by the number of children nodes we counted for this DocumentSymbol.
+                            // This allows us to properly reconstruct symbol nesting.
                             let children = syms.drain(syms.len() - children_count ..);
                             let children = children.rev();
                             Some(children.collect())
@@ -202,7 +212,8 @@ pub async fn document_symbol(
             _ => {},
         }
     }
-    let results = syms.into_iter().rev().collect();
+    // Reverse the syms vec so that document symbols are returned in the correct order. Note that
+    // children nodes are reversed _as the symbols are nested_.
 
     Ok(Some(lsp::DocumentSymbolResponse::Nested(results)))
 }

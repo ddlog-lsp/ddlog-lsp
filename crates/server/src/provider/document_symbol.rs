@@ -6,27 +6,40 @@ use std::sync::Arc;
 mod dat;
 mod dl;
 
+/// Encodes data for constructing upcoming DocumentSymbols.
 #[derive(Clone, Debug)]
 pub(self) struct Data<'tree> {
+    /// The tree-sitter Node to be processed as a symbol.
     pub node: tree_sitter::Node<'tree>,
+    /// Number of (possibly filtered) children to be processed for the symbol.
     pub children_count: usize,
+    /// The kind of document entity the symbol represents.
     pub kind: lsp::SymbolKind,
+    /// The name hint for the symbol (used for anonymous entities).
     pub name_hint: &'static str,
 }
 
+/// Encodes actions for loop iterations when processing tree-sitter nodes.
 #[derive(Debug)]
 pub(self) enum Work<'tree> {
+    /// Construct a DocumentSymbol and pop the data stack.
     Data,
+    /// Add a tree-sitter node to remaining nodes to process.
     Node(tree_sitter::Node<'tree>),
 }
 
+/// Convenience type for packaging a (symbol) name with an lsp range and selection range.
 #[derive(Clone, Debug)]
 pub(self) struct SymbolRange {
+    /// The name (identifier) of the symbol.
     pub name: String,
+    /// The (node-enclosing) range of the symbol.
     pub range: lsp::Range,
+    /// The (identifier-enclosing) range of the symbol.
     pub selection_range: lsp::Range,
 }
 
+/// Compute the name and ranges for a document symbol given tree-sitter node data.
 pub(self) fn symbol_range(
     content: &ropey::Rope,
     node: tree_sitter::Node,
@@ -51,6 +64,7 @@ pub(self) fn symbol_range(
     }
 }
 
+/// Compute "textDocument/documentSymbols" for a given document.
 pub async fn document_symbol(
     session: Arc<core::Session>,
     params: lsp::DocumentSymbolParams,
