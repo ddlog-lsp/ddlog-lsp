@@ -214,6 +214,7 @@ pub async fn document_symbol(
     }
     // Reverse the syms vec so that document symbols are returned in the correct order. Note that
     // children nodes are reversed _as the symbols are nested_.
+    syms.reverse();
 
-    Ok(Some(lsp::DocumentSymbolResponse::Nested(results)))
+    Ok(Some(lsp::DocumentSymbolResponse::Nested(syms)))
 }
