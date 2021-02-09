@@ -33,14 +33,19 @@ impl Document {
         }))
     }
 
-    pub async fn change(session: Arc<core::Session>, uri: &lsp::Url) -> anyhow::Result<Option<tree_sitter::Tree>> {
+    pub async fn change(
+        session: Arc<core::Session>,
+        uri: &lsp::Url,
+        content: &ropey::Rope,
+    ) -> anyhow::Result<Option<tree_sitter::Tree>> {
         let result = {
-            let text = session.get_text(uri).await?;
             let parser = session.get_mut_parser(uri).await?;
             let mut parser = parser.lock().await;
             parser.reset();
-            let content = text.content.clone();
-            let callback = content.chunk_walker(0).callback_adapter();
+            let callback = {
+                let byte_idx = 0;
+                content.clone().chunk_walker(byte_idx).callback_adapter()
+            };
             let old_tree = None;
             parser.parse_with(callback, old_tree)?
         };

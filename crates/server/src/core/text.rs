@@ -47,8 +47,8 @@ impl Text {
         };
         let new_end_byte = start_byte + text_end_byte_idx;
 
-        let start_position = self.content.byte_to_tree_sitter_point(start_byte);
-        let old_end_position = self.content.byte_to_tree_sitter_point(old_end_byte);
+        let start_position = self.content.byte_to_tree_sitter_point(start_byte)?;
+        let old_end_position = self.content.byte_to_tree_sitter_point(old_end_byte)?;
         let new_end_position = {
             let mut last_line = change.text.as_str();
             let mut line_count = 0;

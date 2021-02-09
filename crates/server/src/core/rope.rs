@@ -84,9 +84,9 @@ impl ChunkWalker {
 
 pub trait RopeExt {
     fn byte_to_lsp_position(&self, offset: usize) -> lsp::Position;
-    fn byte_to_tree_sitter_point(&self, offset: usize) -> tree_sitter::Point;
+    fn byte_to_tree_sitter_point(&self, offset: usize) -> anyhow::Result<tree_sitter::Point>;
     fn chunk_walker(self, byte_idx: usize) -> ChunkWalker;
-    fn lsp_position_to_byte(&self, position: lsp::Position) -> anyhow::Result<u32>;
+    fn lsp_position_to_tree_sitter(&self, position: lsp::Position) -> anyhow::Result<(u32, tree_sitter::Point)>;
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32>;
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range>;
     fn tree_sitter_range_to_lsp_range(&self, range: tree_sitter::Range) -> lsp::Range;
@@ -113,12 +113,12 @@ impl RopeExt for Rope {
         lsp::Position::new(line as u32, character as u32)
     }
 
-    fn byte_to_tree_sitter_point(&self, byte_idx: usize) -> tree_sitter::Point {
+    fn byte_to_tree_sitter_point(&self, byte_idx: usize) -> anyhow::Result<tree_sitter::Point> {
         let line_idx = self.byte_to_line(byte_idx);
         let line_byte_idx = self.line_to_byte(line_idx);
         let row = u32::try_from(line_idx).unwrap();
-        let column = u32::try_from(byte_idx - line_byte_idx).unwrap();
-        tree_sitter::Point::new(row, column)
+        let column = u32::try_from(byte_idx - line_byte_idx)?;
+        Ok(tree_sitter::Point::new(row, column))
     }
 
     #[allow(unsafe_code)]
@@ -135,66 +135,40 @@ impl RopeExt for Rope {
         }
     }
 
-    fn lsp_position_to_byte(&self, position: lsp::Position) -> anyhow::Result<u32> {
-        let line_idx = position.line as usize;
-        let character_byte_idx = {
+    fn lsp_position_to_tree_sitter(&self, position: lsp::Position) -> anyhow::Result<(u32, tree_sitter::Point)> {
+        let char_byte_idx = {
             let utf16_cu_idx = position.character as usize;
             let char_idx = self.utf16_cu_to_char(utf16_cu_idx);
             self.char_to_byte(char_idx)
         };
-
-        let mut utf8_offset = 0usize;
-        let mut char_offset = 0usize;
-
-        for c in self.line(line_idx).chars() {
-            if utf8_offset == character_byte_idx {
-                break;
-            }
-
-            if utf8_offset > character_byte_idx {
-                return Err(anyhow!("character is not on an offset boundary"));
-            }
-
-            utf8_offset += c.len_utf8();
-            char_offset += 1;
-        }
-
-        let result = self.line_to_char(line_idx) + char_offset;
-        let result = u32::try_from(result).unwrap();
-        Ok(result)
+        let byte = {
+            let line_idx = position.line as usize;
+            let line_byte_idx = self.line_to_byte(line_idx);
+            u32::try_from(line_byte_idx + char_byte_idx)?
+        };
+        let point = {
+            let row = position.line;
+            let column = u32::try_from(char_byte_idx)?;
+            tree_sitter::Point::new(row, column)
+        };
+        Ok((byte, point))
     }
 
     fn lsp_position_to_utf16_cu(&self, position: lsp::Position) -> anyhow::Result<u32> {
         let line_idx = position.line as usize;
-        let character_utf16_cu_idx = position.character as usize;
-
-        let mut utf16_offset = 0usize;
-        let mut char_offset = 0usize;
-
-        for c in self.line(line_idx).chars() {
-            if utf16_offset == character_utf16_cu_idx {
-                break;
-            }
-
-            if utf16_offset > character_utf16_cu_idx {
-                return Err(anyhow!("character is not on an offset boundary"));
-            }
-
-            utf16_offset += c.len_utf16();
-            char_offset += 1;
-        }
-
-        let result = self.line_to_char(line_idx) + char_offset;
-        let result = u32::try_from(result).unwrap();
+        let line_utf16_cu_idx = {
+            let char_idx = self.line_to_char(line_idx);
+            self.char_to_utf16_cu(char_idx)
+        };
+        let char_utf16_cu_idx = position.character as usize;
+        let result = u32::try_from(line_utf16_cu_idx + char_utf16_cu_idx)?;
         Ok(result)
     }
 
     fn lsp_range_to_tree_sitter_range(&self, range: lsp::Range) -> anyhow::Result<tree_sitter::Range> {
-        let start_byte = self.lsp_position_to_byte(range.start)?;
-        let end_byte = self.lsp_position_to_byte(range.start)?;
-        let start_point = &Default::default();
-        let end_point = &Default::default();
-        let range = tree_sitter::Range::new(start_byte, end_byte, start_point, end_point);
+        let (start_byte, start_point) = self.lsp_position_to_tree_sitter(range.start)?;
+        let (end_byte, end_point) = self.lsp_position_to_tree_sitter(range.start)?;
+        let range = tree_sitter::Range::new(start_byte, end_byte, &start_point, &end_point);
         Ok(range)
     }
 
