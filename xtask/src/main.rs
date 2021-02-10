@@ -532,22 +532,29 @@ mod util {
                     cargo_args.push("--no-default-features".into());
                     cargo_args.push(format!("--features={}", features.join(",")).into());
                 } else if arg == "tokio" {
+                    let features = vec!["runtime-tokio"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
                 } else {
                     return Err(format!("unexpected runtime '{}'", arg.to_string_lossy()).into());
                 }
             }
             if command_name != "install" {
                 if arg == "futures" {
-                    let features = vec!["ddlog-lsp-cli/runtime-futures", "ddlog-lsp-server/runtime-agnostic"];
+                    let features = vec!["ddlog-lsp-cli/runtime-futures"];
                     cargo_args.push("--no-default-features".into());
                     cargo_args.push(format!("--features={}", features.join(",")).into());
                     toolchain.push(String::from("+nightly"));
                 } else if arg == "smol" {
-                    let features = vec!["ddlog-lsp-cli/runtime-smol", "ddlog-lsp-server/runtime-agnostic"];
+                    let features = vec!["ddlog-lsp-cli/runtime-smol"];
                     cargo_args.push("--no-default-features".into());
                     cargo_args.push(format!("--features={}", features.join(",")).into());
                     toolchain.push(String::from("+nightly"));
                 } else if arg == "tokio" {
+                    let features = vec!["ddlog-lsp-cli/runtime-tokio"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                    toolchain.push(String::from("+nightly"));
                 } else {
                     return Err(format!("unexpected runtime '{}'", arg.to_string_lossy()).into());
                 }
