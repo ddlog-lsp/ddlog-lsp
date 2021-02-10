@@ -1,5 +1,6 @@
 pub mod text_document {
     use crate::{core, provider};
+    use lsp_text::RopeExt;
     use std::sync::Arc;
 
     pub async fn did_change(
@@ -12,11 +13,11 @@ pub mod text_document {
         let edits = params
             .content_changes
             .iter()
-            .map(|change| text.build_edit(change))
+            .map(|change| text.content.build_edit(change))
             .collect::<Result<Vec<_>, _>>()?;
 
         for edit in &edits {
-            text.apply_edit(edit);
+            text.content.apply_edit(edit);
         }
 
         if let Some(tree) = core::Document::change(session.clone(), uri, &text.content, &edits).await? {

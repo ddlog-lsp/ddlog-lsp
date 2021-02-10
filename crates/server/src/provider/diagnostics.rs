@@ -1,4 +1,4 @@
-use crate::core::RopeExt;
+use lsp_text::RopeExt;
 
 pub fn diagnostics(tree: &tree_sitter::Tree, content: &ropey::Rope) -> Vec<lsp::Diagnostic> {
     let mut diagnostics = vec![];

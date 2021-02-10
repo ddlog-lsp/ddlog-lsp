@@ -551,6 +551,7 @@ dependencies = [
  "goldenfile",
  "indoc",
  "log",
+ "lsp-text",
  "lsp-types",
  "lspower",
  "ropey",
@@ -946,6 +947,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
 dependencies = [
  "cfg-if 1.0.0",
+]
+
+[[package]]
+name = "lsp-text"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cee3f18fab348ef88688d37b2ff416f42bfb49a0f375e30b7a5fc234d5e3c88b"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "lsp-types",
+ "ropey",
+ "tree-sitter-facade",
 ]
 
 [[package]]

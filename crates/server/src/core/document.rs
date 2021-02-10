@@ -1,4 +1,5 @@
-use crate::core::{self, RopeExt};
+use crate::core::{self};
+use lsp_text::{RopeExt, TextEdit};
 use std::{convert::TryFrom, sync::Arc};
 
 #[cfg(feature = "runtime-agnostic")]
@@ -37,7 +38,7 @@ impl Document {
         session: Arc<core::Session>,
         uri: &lsp::Url,
         content: &ropey::Rope,
-        edits: &[core::TextEdit<'changes>],
+        edits: &[TextEdit<'changes>],
     ) -> anyhow::Result<Option<tree_sitter::Tree>> {
         let result = {
             let parser = session.get_mut_parser(uri).await?;

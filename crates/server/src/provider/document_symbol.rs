@@ -1,6 +1,7 @@
 #![allow(unused)]
 
-use crate::core::{self, RopeExt};
+use crate::core::{self};
+use lsp_text::RopeExt;
 use std::sync::Arc;
 
 mod dat;
