@@ -41,6 +41,19 @@ cargo xtask init
 cargo xtask install
 ```
 
+##### Selecting the Async Runtime
+
+The server is runtime agnostic and can be configured to run on [`async-std`](https://github.com/async-rs/async-std), [`futures`](https://github.com/rust-lang/futures-rs), [`smol`](https://github.com/smol-rs/smol), or [`tokio`](https://github.com/tokio-rs).
+
+The table below describes how to select a runtime. The `tokio` runtime is selected by default.
+
+| runtime     | command                                   |
+| ----------- | ----------------------------------------- |
+| `async-std` | `cargo xtask install --runtime=async-std` |
+| `futures`   | `cargo xtask install --runtime=futures`   |
+| `smol`      | `cargo xtask install --runtime=smol`      |
+| `tokio`     | `cargo xtask install --runtime=tokio`     |
+
 ### Installing the Client Extension
 
 Once the server is installed you can install the Visual Studio Code [client extension](https://github.com/ddlog-lsp/vscode-ddlog).
