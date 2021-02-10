@@ -18,6 +18,19 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "runtime-async-std")]
+fn run() -> anyhow::Result<()> {
+    env_logger::try_init()?;
+    cli();
+    async_std::task::block_on(async {
+        let (service, messages) = LspService::new(|client| ddlog_lsp_server::Server::new(client).unwrap());
+        let stdin = async_std::io::stdin();
+        let stdout = async_std::io::stdout();
+        Server::new(stdin, stdout).interleave(messages).serve(service).await;
+        Ok(())
+    })
+}
+
 #[cfg(feature = "runtime-futures")]
 fn run() -> anyhow::Result<()> {
     env_logger::try_init()?;

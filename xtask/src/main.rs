@@ -523,7 +523,11 @@ mod util {
         let mut toolchain = vec![];
         if let Some(arg) = args.opt_value_from_str::<_, std::ffi::OsString>("--runtime")? {
             if command_name == "install" {
-                if arg == "futures" {
+                if arg == "async-std" {
+                    let features = vec!["runtime-async-std"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                } else if arg == "futures" {
                     let features = vec!["runtime-futures"];
                     cargo_args.push("--no-default-features".into());
                     cargo_args.push(format!("--features={}", features.join(",")).into());
@@ -540,7 +544,12 @@ mod util {
                 }
             }
             if command_name != "install" {
-                if arg == "futures" {
+                if arg == "async-std" {
+                    let features = vec!["ddlog-lsp-cli/runtime-async-std"];
+                    cargo_args.push("--no-default-features".into());
+                    cargo_args.push(format!("--features={}", features.join(",")).into());
+                    toolchain.push(String::from("+nightly"));
+                } else if arg == "futures" {
                     let features = vec!["ddlog-lsp-cli/runtime-futures"];
                     cargo_args.push("--no-default-features".into());
                     cargo_args.push(format!("--features={}", features.join(",")).into());
