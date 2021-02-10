@@ -43,7 +43,7 @@ cargo xtask install
 
 ##### Selecting the Async Runtime
 
-The server is runtime agnostic and can be configured to run on [`async-std`](https://github.com/async-rs/async-std), [`futures`](https://github.com/rust-lang/futures-rs), [`smol`](https://github.com/smol-rs/smol), or [`tokio`](https://github.com/tokio-rs).
+The server is runtime agnostic and can be configured to run on [`async-std`](https://github.com/async-rs/async-std), [`futures`](https://github.com/rust-lang/futures-rs), [`smol`](https://github.com/smol-rs/smol), or [`tokio`](https://github.com/tokio-rs/tokio).
 
 The table below describes how to select a runtime. The `tokio` runtime is selected by default.
 
