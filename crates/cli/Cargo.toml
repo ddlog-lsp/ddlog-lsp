@@ -22,19 +22,19 @@ path = "src/bin/main.rs"
 default = ["runtime-tokio"]
 runtime-futures = [
   "blocking",
+  "ddlog-lsp-server/runtime-agnostic",
   "futures",
   "lspower/runtime-agnostic",
-  "ddlog-lsp-server/runtime-agnostic",
 ]
 runtime-smol = [
+  "ddlog-lsp-server/runtime-agnostic",
   "lspower/runtime-agnostic",
   "smol",
-  "ddlog-lsp-server/runtime-agnostic",
 ]
 runtime-tokio = [
+  "ddlog-lsp-server/runtime-tokio",
   "lspower/runtime-tokio",
   "tokio",
-  "ddlog-lsp-server/runtime-tokio",
 ]
 
 [build-dependencies]
