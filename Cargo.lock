@@ -1037,9 +1037,9 @@ dependencies = [
 
 [[package]]
 name = "lsp-text"
-version = "0.0.0"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cee3f18fab348ef88688d37b2ff416f42bfb49a0f375e30b7a5fc234d5e3c88b"
+checksum = "1f4d57a91f271682a09ff1c9f7fd9d21fb89467b8101bdfc82fd93e750f6722a"
 dependencies = [
  "anyhow",
  "bytes",
