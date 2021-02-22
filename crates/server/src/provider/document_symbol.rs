@@ -9,7 +9,7 @@ mod dl;
 
 /// Encodes data for constructing upcoming DocumentSymbols.
 #[derive(Clone, Debug)]
-pub(self) struct Data<'tree> {
+pub struct Data<'tree> {
     /// The tree-sitter Node to be processed as a symbol.
     pub node: tree_sitter::Node<'tree>,
     /// Number of (possibly filtered) children to be processed for the symbol.
@@ -22,7 +22,7 @@ pub(self) struct Data<'tree> {
 
 /// Encodes actions for loop iterations when processing tree-sitter nodes.
 #[derive(Debug)]
-pub(self) enum Work<'tree> {
+pub enum Work<'tree> {
     /// Construct a DocumentSymbol and pop the data stack.
     Data,
     /// Add a tree-sitter node to remaining nodes to process.
@@ -31,7 +31,7 @@ pub(self) enum Work<'tree> {
 
 /// Convenience type for packaging a (symbol) name with an lsp range and selection range.
 #[derive(Clone, Debug)]
-pub(self) struct SymbolRange {
+pub struct SymbolRange {
     /// The name (identifier) of the symbol.
     pub name: String,
     /// The (node-enclosing) range of the symbol.
@@ -41,7 +41,7 @@ pub(self) struct SymbolRange {
 }
 
 /// Compute the name and ranges for a document symbol given tree-sitter node data.
-pub(self) fn symbol_range(
+pub fn symbol_range(
     content: &ropey::Rope,
     node: tree_sitter::Node,
     name_hint: &'static str,
