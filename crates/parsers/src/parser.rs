@@ -1,6 +1,6 @@
 //! Core functionality related to document parsers.
 
-use crate::core::language::{self, Language};
+use crate::language::{self, Language};
 use std::convert::TryFrom;
 
 /// Create a `.dat` parser from the tree-sitter grammar.

@@ -1,6 +1,6 @@
 //! Core functionality related to document languages.
 
-use crate::core::error::Error::{InvalidLanguageId, OsStrToStrFailed, PathExtensionFailed};
+use crate::error::Error::{InvalidLanguageId, OsStrToStrFailed, PathExtensionFailed};
 use std::{convert::TryFrom, path::Path};
 
 /// Languages supported by the server.
