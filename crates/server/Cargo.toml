@@ -30,7 +30,7 @@ async-lock = { version = "2.3", optional = true }
 bytes = "1.0"
 clap = "2.33"
 dashmap = "4.0"
-ddlog-lsp-parsers = { path = "../parsers" }
+ddlog-lsp-syntax = { path = "../syntax" }
 env_logger = "0.8"
 futures = "0.3"
 log = "0.4"

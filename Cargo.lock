@@ -575,22 +575,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ddlog-lsp-parsers"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "cc",
- "futures-lite",
- "lazy_static",
- "thiserror",
- "tree-sitter",
- "tree-sitter-facade",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-tree-sitter-sys",
-]
-
-[[package]]
 name = "ddlog-lsp-server"
 version = "0.0.0"
 dependencies = [
@@ -602,7 +586,7 @@ dependencies = [
  "criterion",
  "dashmap",
  "ddlog-lsp-macros",
- "ddlog-lsp-parsers",
+ "ddlog-lsp-syntax",
  "env_logger",
  "futures",
  "glob",
@@ -619,6 +603,22 @@ dependencies = [
  "tree-sitter-facade",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
+]
+
+[[package]]
+name = "ddlog-lsp-syntax"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "futures-lite",
+ "lazy_static",
+ "thiserror",
+ "tree-sitter",
+ "tree-sitter-facade",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-tree-sitter-sys",
 ]
 
 [[package]]
