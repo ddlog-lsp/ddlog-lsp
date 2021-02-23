@@ -49,9 +49,14 @@ pub mod kind {
         pub static ref ATOM: u16 = super::language().id_for_node_kind("atom", true);
         pub static ref ATTRIBUTE: u16 = super::language().id_for_node_kind("attribute", true);
         pub static ref ATTRIBUTES: u16 = super::language().id_for_node_kind("attributes", true);
+        pub static ref COMMENT_BLOCK: u16 = super::language().id_for_node_kind("comment_block", true);
+        pub static ref COMMENT_LINE: u16 = super::language().id_for_node_kind("comment_line", true);
         pub static ref CONS_POS: u16 = super::language().id_for_node_kind("cons_pos", true);
         pub static ref CONS_REC: u16 = super::language().id_for_node_kind("cons_rec", true);
         pub static ref CONS: u16 = super::language().id_for_node_kind("cons", true);
+        pub static ref ESCAPE_SEQUENCE_INTERPOLATED: u16 =
+            super::language().id_for_node_kind("escape_sequence_interpolated", true);
+        pub static ref ESCAPE_SEQUENCE: u16 = super::language().id_for_node_kind("escape_sequence", true);
         pub static ref EXP_ADD: u16 = super::language().id_for_node_kind("exp_add", true);
         pub static ref EXP_ASSIGN: u16 = super::language().id_for_node_kind("exp_assign", true);
         pub static ref EXP_BINDING: u16 = super::language().id_for_node_kind("exp_binding", true);
@@ -107,6 +112,9 @@ pub mod kind {
         pub static ref FUNCTION_EXTERN: u16 = super::language().id_for_node_kind("function_extern", true);
         pub static ref FUNCTION_NORMAL: u16 = super::language().id_for_node_kind("function_normal", true);
         pub static ref FUNCTION: u16 = super::language().id_for_node_kind("function", true);
+        pub static ref IDENT_LOWER_SCOPED: u16 = super::language().id_for_node_kind("ident_lower_scoped", true);
+        pub static ref IDENT_UPPER_SCOPED: u16 = super::language().id_for_node_kind("ident_upper_scoped", true);
+        pub static ref IDENT: u16 = super::language().id_for_node_kind("ident", true);
         pub static ref IMPORT: u16 = super::language().id_for_node_kind("import", true);
         pub static ref INDEX: u16 = super::language().id_for_node_kind("index", true);
         pub static ref INTERPOLATION: u16 = super::language().id_for_node_kind("interpolation", true);
