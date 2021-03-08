@@ -11,11 +11,11 @@ description = """
 Internal macros for the DDlog language server implementation.
 """
 
-[lib]
-proc-macro = true
-
 [badges]
 maintenance = { status = "experimental" }
+
+[lib]
+proc-macro = true
 
 [dependencies]
 anyhow = "1.0"
