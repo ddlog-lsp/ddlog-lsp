@@ -6,7 +6,7 @@ mod session;
 mod text;
 
 pub use ddlog_lsp_languages::{language::Language, parser};
-pub use ddlog_lsp_syntax::{language, node};
+pub use ddlog_lsp_syntax::{language, node, range};
 pub use document::*;
 pub use error::*;
 pub use session::*;

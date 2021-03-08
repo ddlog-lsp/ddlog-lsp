@@ -9,3 +9,6 @@ pub mod language;
 
 /// Functionality related to [`tree-sitter::Node`].
 pub mod node;
+
+/// Functionality related to [`tree_sitter::Range`].
+pub mod range;
