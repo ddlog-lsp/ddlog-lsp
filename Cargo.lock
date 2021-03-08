@@ -554,16 +554,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "ddlog-lsp-languages"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "cc",
+ "futures",
+ "thiserror",
+ "tree-sitter",
+ "tree-sitter-facade",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-tree-sitter-sys",
+]
+
+[[package]]
 name = "ddlog-lsp-macros"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "ddlog-lsp-languages",
  "glob",
  "heck",
  "proc-macro2",
  "quote",
  "syn",
  "thiserror",
+ "tree-sitter",
 ]
 
 [[package]]
@@ -577,6 +594,7 @@ dependencies = [
  "clap",
  "criterion",
  "dashmap",
+ "ddlog-lsp-languages",
  "ddlog-lsp-macros",
  "ddlog-lsp-syntax",
  "env_logger",
@@ -602,10 +620,9 @@ name = "ddlog-lsp-syntax"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "cc",
+ "ddlog-lsp-languages",
+ "ddlog-lsp-macros",
  "futures-lite",
- "lazy_static",
- "thiserror",
  "tree-sitter",
  "tree-sitter-facade",
  "wasm-bindgen",

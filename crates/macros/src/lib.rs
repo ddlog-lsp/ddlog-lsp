@@ -1,10 +1,16 @@
-//! Macros for the ddlog language server.
+//! Macros for the DDlog language server.
 
 #![deny(clippy::all)]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 
-mod corpus {
+use glob::glob;
+use proc_macro::TokenStream;
+use quote::quote;
+
+mod corpus_tests {
+    use syn::parse::{Parse, ParseStream};
+
     mod keyword {
         syn::custom_keyword!(corpus);
         syn::custom_keyword!(include);
@@ -12,16 +18,14 @@ mod corpus {
         syn::custom_keyword!(handler);
     }
 
-    use syn::parse::{Parse, ParseStream};
-
-    pub(crate) struct TestsMacroInput {
+    pub(crate) struct MacroInput {
         pub(crate) corpus: syn::Ident,
         pub(crate) include: String,
         pub(crate) exclude: Vec<String>,
         pub(crate) handler: syn::Expr,
     }
 
-    impl Parse for TestsMacroInput {
+    impl Parse for MacroInput {
         fn parse(input: ParseStream) -> syn::parse::Result<Self> {
             input.parse::<keyword::corpus>()?;
             input.parse::<syn::Token![:]>()?;
@@ -51,7 +55,7 @@ mod corpus {
             let handler = input.parse()?;
             input.parse::<syn::Token![,]>().ok();
 
-            Ok(TestsMacroInput {
+            Ok(MacroInput {
                 corpus,
                 include,
                 exclude,
@@ -60,10 +64,6 @@ mod corpus {
         }
     }
 }
-
-use glob::glob;
-use proc_macro::TokenStream;
-use quote::quote;
 
 /// Generate tests from a corpus of wasm modules on the filesystem.
 ///
@@ -84,43 +84,39 @@ use quote::quote;
 /// ```
 #[proc_macro]
 pub fn corpus_tests(input: TokenStream) -> TokenStream {
-    let corpus::TestsMacroInput {
+    let corpus_tests::MacroInput {
         corpus,
         include,
         exclude,
         handler,
-    } = syn::parse_macro_input!(input as corpus::TestsMacroInput);
-    // compute a string representation for the corpus name
+    } = syn::parse_macro_input!(input as corpus_tests::MacroInput);
+    // Compute a string representation for the corpus name.
     let corpus_name = corpus.to_string();
     let corpus_name = corpus_name.as_str();
 
-    // compute the paths from the glob pattern
+    // Compute the paths from the glob pattern.
     let paths = glob(&include).unwrap();
 
-    // prepare the vector of syntax items; these items are the individual test
-    // functions that will be enclosed in the generated test submodule
+    // Prepare the vector of syntax items; these items are the individual test
+    // functions that will be enclosed in the generated test submodule.
     let mut content = vec![];
 
     for path in paths {
-        // ensure the path is canonicalized and absolute
+        // Ensure the path is canonicalized and absolute
         let path = path.unwrap().canonicalize().unwrap();
         let path_name = path.to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
 
-        if file_name.ends_with(".fail.dl") {
-            continue;
-        }
-
-        // skip the file if contained in the exclude list; otherwise continue
+        // Skip the file if contained in the exclude list; otherwise continue.
         if !exclude.contains(&String::from(file_name)) {
             let file_stem = path.file_stem().unwrap().to_str().unwrap();
             let test_name = heck::SnakeCase::to_snake_case(file_stem);
             let test_name = format!("r#{}", test_name);
 
-            // compute the test identifier
+            // Compute the test identifier.
             let test = syn::parse_str::<syn::Ident>(&test_name).unwrap();
 
-            // generate the individual test function for the given file
+            // Generate the individual test function for the given file.
             let item = quote! {
                 #[test]
                 fn #test() {
@@ -131,13 +127,202 @@ pub fn corpus_tests(input: TokenStream) -> TokenStream {
         }
     }
 
-    // generate the enclosing test submodule for the given corpus
+    // Generate the enclosing test submodule for the given corpus.
     let module = quote! {
         mod #corpus {
-            // include the test functions generated from the corpus files
+            // Include the test functions generated from the corpus files.
             #(#content)*
         }
     };
 
     module.into()
+}
+
+mod language {
+    use std::convert::TryFrom;
+    use syn::parse::{Parse, ParseStream};
+
+    pub(crate) struct Language(pub(crate) ddlog_lsp_languages::language::Language);
+
+    impl Parse for Language {
+        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
+            let language = input.parse::<syn::LitStr>()?.value();
+            let language = ddlog_lsp_languages::language::Language::try_from(language.as_str());
+            let language = language.map_err(|_| input.error("invalid language identifier"))?;
+            Ok(Language(language))
+        }
+    }
+}
+
+mod field_ids {
+    use syn::parse::{Parse, ParseStream};
+
+    mod keyword {
+        syn::custom_keyword!(language);
+        syn::custom_keyword!(fields);
+    }
+
+    pub(crate) struct Field {
+        pub(crate) ident: syn::Ident,
+        pub(crate) name: String,
+    }
+
+    impl Parse for Field {
+        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
+            let content;
+            syn::parenthesized!(content in input);
+            let ident = content.parse()?;
+            content.parse::<syn::Token![,]>()?;
+            let name = content.parse::<syn::LitStr>()?.value();
+            Ok(Field { ident, name })
+        }
+    }
+
+    pub(crate) struct MacroInput {
+        pub(crate) language: super::language::Language,
+        pub(crate) fields: Vec<Field>,
+    }
+
+    impl Parse for MacroInput {
+        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
+            input.parse::<keyword::language>()?;
+            input.parse::<syn::Token![:]>()?;
+            let language = input.parse()?;
+            input.parse::<syn::Token![,]>()?;
+
+            input.parse::<keyword::fields>()?;
+            input.parse::<syn::Token![:]>()?;
+            let fields = {
+                let content;
+                syn::bracketed!(content in input);
+                content
+                    .parse_terminated::<Field, syn::Token![,]>(|b| b.parse())?
+                    .into_iter()
+                    .collect()
+            };
+            input.parse::<syn::Token![,]>().ok();
+
+            Ok(MacroInput { language, fields })
+        }
+    }
+}
+
+#[allow(missing_docs)]
+#[proc_macro]
+pub fn field_ids(input: TokenStream) -> TokenStream {
+    use ddlog_lsp_languages::language;
+
+    let macro_input = syn::parse_macro_input!(input as field_ids::MacroInput);
+
+    #[allow(unsafe_code)]
+    let language = match macro_input.language.0 {
+        language::Language::DDlogDat => language::dat(),
+        language::Language::DDlogDl => language::dl(),
+    };
+
+    let mut content = vec![];
+
+    for field in macro_input.fields {
+        let ident = field.ident;
+        let name = field.name.as_str();
+        let value = language.field_id_for_name(name).expect("field does not exist");
+        let item = quote! {
+            pub const #ident: u16 = #value;
+        };
+        content.push(item);
+    }
+
+    let result = quote! {
+        #(#content)*
+    };
+
+    result.into()
+}
+
+mod node_kind_ids {
+    use syn::parse::{Parse, ParseStream};
+
+    mod keyword {
+        syn::custom_keyword!(language);
+        syn::custom_keyword!(node_kinds);
+    }
+
+    pub(crate) struct NodeKind {
+        pub(crate) ident: syn::Ident,
+        pub(crate) kind: String,
+        pub(crate) named: bool,
+    }
+
+    impl Parse for NodeKind {
+        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
+            let content;
+            syn::parenthesized!(content in input);
+            let ident = content.parse()?;
+            content.parse::<syn::Token![,]>()?;
+            let kind = content.parse::<syn::LitStr>()?.value();
+            content.parse::<syn::Token![,]>()?;
+            let named = content.parse::<syn::LitBool>()?.value();
+            Ok(NodeKind { ident, kind, named })
+        }
+    }
+
+    pub(crate) struct MacroInput {
+        pub(crate) language: super::language::Language,
+        pub(crate) node_kinds: Vec<NodeKind>,
+    }
+
+    impl Parse for MacroInput {
+        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
+            input.parse::<keyword::language>()?;
+            input.parse::<syn::Token![:]>()?;
+            let language = input.parse()?;
+            input.parse::<syn::Token![,]>()?;
+
+            input.parse::<keyword::node_kinds>()?;
+            input.parse::<syn::Token![:]>()?;
+            let node_kinds = {
+                let content;
+                syn::bracketed!(content in input);
+                content
+                    .parse_terminated::<NodeKind, syn::Token![,]>(|b| b.parse())?
+                    .into_iter()
+                    .collect()
+            };
+            input.parse::<syn::Token![,]>().ok();
+
+            Ok(MacroInput { language, node_kinds })
+        }
+    }
+}
+
+#[allow(missing_docs)]
+#[proc_macro]
+pub fn node_kind_ids(input: TokenStream) -> TokenStream {
+    use ddlog_lsp_languages::language;
+
+    let macro_input = syn::parse_macro_input!(input as node_kind_ids::MacroInput);
+
+    #[allow(unsafe_code)]
+    let language = match macro_input.language.0 {
+        language::Language::DDlogDat => language::dat(),
+        language::Language::DDlogDl => language::dl(),
+    };
+
+    let mut content = vec![];
+
+    for node_kind in macro_input.node_kinds {
+        let ident = node_kind.ident;
+        let kind = node_kind.kind.as_str();
+        let value = language.id_for_node_kind(kind, node_kind.named);
+        let item = quote! {
+            pub const #ident: u16 = #value;
+        };
+        content.push(item);
+    }
+
+    let result = quote! {
+        #(#content)*
+    };
+
+    result.into()
 }

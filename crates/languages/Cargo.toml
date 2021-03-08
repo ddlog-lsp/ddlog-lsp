@@ -1,6 +1,6 @@
 [package]
 edition = "2018"
-name = "ddlog-lsp-syntax"
+name = "ddlog-lsp-languages"
 version = "0.0.0"
 authors = ["hvithrafn <hvithrafn@users.noreply.github.com>"]
 license = "Apache-2.0 WITH LLVM-exception"
@@ -8,16 +8,19 @@ readme = "README.md"
 repository = "https://github.com/ddlog-lsp/ddlog-lsp"
 keywords = []
 description = """
-Syntax related definitions for the DDlog language server.
+Tree-sitter languages for the DDlog language server.
 """
 
 [badges]
 maintenance = { status = "experimental" }
 
+[build-dependencies]
+anyhow = "1.0"
+cc = "1.0"
+
 [dependencies]
 anyhow = "1.0"
-ddlog-lsp-languages = { version = "0.0", path = "../languages" }
-ddlog-lsp-macros = { version = "0.0", path = "../macros" }
+thiserror = "1.0"
 
 [dependencies.tree-sitter]
 package = "tree-sitter-facade"
@@ -32,8 +35,7 @@ wasm-bindgen = { version = "=0.2.71", features = ["strict-macro"] }
 wasm-bindgen-futures = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.futures]
-package = "futures-lite"
-version = "1.11"
+version = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-tree-sitter-sys]
-version = "0.2"
+version = "0.2.0"

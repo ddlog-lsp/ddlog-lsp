@@ -1,4 +1,4 @@
-use crate::language::Language;
+use ddlog_lsp_languages::language::Language;
 use std::slice::SliceIndex;
 
 /// The current node stack. Used for context comparison.
@@ -183,7 +183,7 @@ impl<'tree> NodeWalker<'tree> {
         let kind = node.kind_id();
 
         // Reconstruct the stack by traversing upward if the current node isn't ROOT.
-        if (language == DDlogDat && *dat::kind::ROOT != kind) || (language == DDlogDl && *dl::kind::ROOT != kind) {
+        if (language == DDlogDat && dat::kind::ROOT != kind) || (language == DDlogDl && dl::kind::ROOT != kind) {
             while self.cursor.goto_parent() {
                 self.stack.push(self.cursor.node());
             }

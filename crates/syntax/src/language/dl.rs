@@ -1,203 +1,181 @@
 //! Functions for working with the `.dl` grammar.
 
-/// Tree-sitter language for the `.dl` grammar.
-#[cfg(not(target_arch = "wasm32"))]
-#[allow(unsafe_code)]
-pub fn language() -> tree_sitter::Language {
-    let inner = unsafe { crate::tree_sitter_ddlog_dl() };
-    inner.into()
-}
-
-/// Tree-sitter language for the `.dl` grammar.
-#[cfg(target_arch = "wasm32")]
-#[allow(unsafe_code)]
-pub fn language() -> tree_sitter::Language {
-    use wasm_bindgen::JsCast;
-    use wasm_bindgen_futures::JsFuture;
-    let bytes: &[u8] = include_bytes!("../../../../../vendor/tree-sitter-ddlog/ddlog/dl/tree-sitter-ddlog_dl.wasm");
-    let promise = web_tree_sitter_sys::Language::load_bytes(&bytes.into());
-    let future = JsFuture::from(promise);
-    let result = futures::future::block_on(future).unwrap();
-    let inner = result.unchecked_into::<web_tree_sitter_sys::Language>();
-    inner.into()
-}
-
 pub mod field {
     #![allow(missing_docs)]
 
-    use lazy_static::lazy_static;
-
-    lazy_static! {
-        pub static ref IDENTIFIER: u16 = super::language().field_id_for_name("identifier").unwrap();
+    ddlog_lsp_macros::field_ids! {
+        language: "ddlog.dl",
+        fields: [
+            (IDENTIFIER, "identifier"),
+        ]
     }
 }
 
 pub mod kind {
     #![allow(missing_docs)]
 
-    use lazy_static::lazy_static;
-
-    lazy_static! {
-        pub static ref ANNOTATED_ITEM: u16 = super::language().id_for_node_kind("annotated_item", true);
-        pub static ref APPLY: u16 = super::language().id_for_node_kind("apply", true);
-        pub static ref ARG_OPT_TYPE: u16 = super::language().id_for_node_kind("arg_opt_type", true);
-        pub static ref ARG_TRANS: u16 = super::language().id_for_node_kind("arg_trans", true);
-        pub static ref ARG: u16 = super::language().id_for_node_kind("arg", true);
-        pub static ref ATOM_ELEM: u16 = super::language().id_for_node_kind("atom_elem", true);
-        pub static ref ATOM_POS: u16 = super::language().id_for_node_kind("atom_pos", true);
-        pub static ref ATOM_REC: u16 = super::language().id_for_node_kind("atom_rec", true);
-        pub static ref ATOM: u16 = super::language().id_for_node_kind("atom", true);
-        pub static ref ATTRIBUTE: u16 = super::language().id_for_node_kind("attribute", true);
-        pub static ref ATTRIBUTES: u16 = super::language().id_for_node_kind("attributes", true);
-        pub static ref COMMENT_BLOCK: u16 = super::language().id_for_node_kind("comment_block", true);
-        pub static ref COMMENT_LINE: u16 = super::language().id_for_node_kind("comment_line", true);
-        pub static ref CONS_POS: u16 = super::language().id_for_node_kind("cons_pos", true);
-        pub static ref CONS_REC: u16 = super::language().id_for_node_kind("cons_rec", true);
-        pub static ref CONS: u16 = super::language().id_for_node_kind("cons", true);
-        pub static ref ESCAPE_SEQUENCE_INTERPOLATED: u16 =
-            super::language().id_for_node_kind("escape_sequence_interpolated", true);
-        pub static ref ESCAPE_SEQUENCE: u16 = super::language().id_for_node_kind("escape_sequence", true);
-        pub static ref EXP_ADD: u16 = super::language().id_for_node_kind("exp_add", true);
-        pub static ref EXP_ASSIGN: u16 = super::language().id_for_node_kind("exp_assign", true);
-        pub static ref EXP_BINDING: u16 = super::language().id_for_node_kind("exp_binding", true);
-        pub static ref EXP_BIT_AND: u16 = super::language().id_for_node_kind("exp_bit_and", true);
-        pub static ref EXP_BIT_NEG: u16 = super::language().id_for_node_kind("exp_bit_neg", true);
-        pub static ref EXP_BIT_OR: u16 = super::language().id_for_node_kind("exp_bit_or", true);
-        pub static ref EXP_BIT_SLICE: u16 = super::language().id_for_node_kind("exp_bit_slice", true);
-        pub static ref EXP_BIT_XOR: u16 = super::language().id_for_node_kind("exp_bit_xor", true);
-        pub static ref EXP_BLOCK: u16 = super::language().id_for_node_kind("exp_block", true);
-        pub static ref EXP_BREAK: u16 = super::language().id_for_node_kind("exp_break", true);
-        pub static ref EXP_CAST: u16 = super::language().id_for_node_kind("exp_cast", true);
-        pub static ref EXP_CAT: u16 = super::language().id_for_node_kind("exp_cat", true);
-        pub static ref EXP_COND: u16 = super::language().id_for_node_kind("exp_cond", true);
-        pub static ref EXP_CONS_POS: u16 = super::language().id_for_node_kind("exp_cons_pos", true);
-        pub static ref EXP_CONS_REC: u16 = super::language().id_for_node_kind("exp_cons_rec", true);
-        pub static ref EXP_CONTINUE: u16 = super::language().id_for_node_kind("exp_continue", true);
-        pub static ref EXP_DECL_VAR: u16 = super::language().id_for_node_kind("exp_decl_var", true);
-        pub static ref EXP_DIV: u16 = super::language().id_for_node_kind("exp_div", true);
-        pub static ref EXP_EQ: u16 = super::language().id_for_node_kind("exp_eq", true);
-        pub static ref EXP_FIELD: u16 = super::language().id_for_node_kind("exp_field", true);
-        pub static ref EXP_FOR: u16 = super::language().id_for_node_kind("exp_for", true);
-        pub static ref EXP_FUN_CALL_DOT: u16 = super::language().id_for_node_kind("exp_fun_call_dot", true);
-        pub static ref EXP_FUN_CALL: u16 = super::language().id_for_node_kind("exp_fun_call", true);
-        pub static ref EXP_GT: u16 = super::language().id_for_node_kind("exp_gt", true);
-        pub static ref EXP_GTEQ: u16 = super::language().id_for_node_kind("exp_gteq", true);
-        pub static ref EXP_LAMBDA: u16 = super::language().id_for_node_kind("exp_lambda", true);
-        pub static ref EXP_LIT: u16 = super::language().id_for_node_kind("exp_lit", true);
-        pub static ref EXP_LOG_AND: u16 = super::language().id_for_node_kind("exp_log_and", true);
-        pub static ref EXP_LOG_IMP: u16 = super::language().id_for_node_kind("exp_log_imp", true);
-        pub static ref EXP_LOG_NEG: u16 = super::language().id_for_node_kind("exp_log_neg", true);
-        pub static ref EXP_LOG_OR: u16 = super::language().id_for_node_kind("exp_log_or", true);
-        pub static ref EXP_LT: u16 = super::language().id_for_node_kind("exp_lt", true);
-        pub static ref EXP_LTEQ: u16 = super::language().id_for_node_kind("exp_lteq", true);
-        pub static ref EXP_MATCH: u16 = super::language().id_for_node_kind("exp_match", true);
-        pub static ref EXP_MUL: u16 = super::language().id_for_node_kind("exp_mul", true);
-        pub static ref EXP_NEG: u16 = super::language().id_for_node_kind("exp_neg", true);
-        pub static ref EXP_NEQ: u16 = super::language().id_for_node_kind("exp_neq", true);
-        pub static ref EXP_PROJ: u16 = super::language().id_for_node_kind("exp_proj", true);
-        pub static ref EXP_REF: u16 = super::language().id_for_node_kind("exp_ref", true);
-        pub static ref EXP_REM: u16 = super::language().id_for_node_kind("exp_rem", true);
-        pub static ref EXP_RETURN: u16 = super::language().id_for_node_kind("exp_return", true);
-        pub static ref EXP_SEQ: u16 = super::language().id_for_node_kind("exp_seq", true);
-        pub static ref EXP_SHL: u16 = super::language().id_for_node_kind("exp_shl", true);
-        pub static ref EXP_SHR: u16 = super::language().id_for_node_kind("exp_shr", true);
-        pub static ref EXP_SLICE: u16 = super::language().id_for_node_kind("exp_slice", true);
-        pub static ref EXP_SUB: u16 = super::language().id_for_node_kind("exp_sub", true);
-        pub static ref EXP_TRY: u16 = super::language().id_for_node_kind("exp_try", true);
-        pub static ref EXP_TUPLE: u16 = super::language().id_for_node_kind("exp_tuple", true);
-        pub static ref EXP_TYPE: u16 = super::language().id_for_node_kind("exp_type", true);
-        pub static ref EXP_WILD: u16 = super::language().id_for_node_kind("exp_wild", true);
-        pub static ref EXP: u16 = super::language().id_for_node_kind("exp", true);
-        pub static ref FIELD: u16 = super::language().id_for_node_kind("field", true);
-        pub static ref FUNCTION_EXTERN: u16 = super::language().id_for_node_kind("function_extern", true);
-        pub static ref FUNCTION_NORMAL: u16 = super::language().id_for_node_kind("function_normal", true);
-        pub static ref FUNCTION: u16 = super::language().id_for_node_kind("function", true);
-        pub static ref IDENT_LOWER_SCOPED: u16 = super::language().id_for_node_kind("ident_lower_scoped", true);
-        pub static ref IDENT_UPPER_SCOPED: u16 = super::language().id_for_node_kind("ident_upper_scoped", true);
-        pub static ref IDENT: u16 = super::language().id_for_node_kind("ident", true);
-        pub static ref IMPORT: u16 = super::language().id_for_node_kind("import", true);
-        pub static ref INDEX: u16 = super::language().id_for_node_kind("index", true);
-        pub static ref INTERPOLATION: u16 = super::language().id_for_node_kind("interpolation", true);
-        pub static ref ITEM: u16 = super::language().id_for_node_kind("item", true);
-        pub static ref KEY_PRIMARY: u16 = super::language().id_for_node_kind("key_primary", true);
-        pub static ref LIT_BOOL: u16 = super::language().id_for_node_kind("lit_bool", true);
-        pub static ref LIT_MAP: u16 = super::language().id_for_node_kind("lit_map", true);
-        pub static ref LIT_NUM_BIN: u16 = super::language().id_for_node_kind("lit_num_bin", true);
-        pub static ref LIT_NUM_DEC: u16 = super::language().id_for_node_kind("lit_num_dec", true);
-        pub static ref LIT_NUM_FLOAT: u16 = super::language().id_for_node_kind("lit_num_float", true);
-        pub static ref LIT_NUM_HEX: u16 = super::language().id_for_node_kind("lit_num_hex", true);
-        pub static ref LIT_NUM_OCT: u16 = super::language().id_for_node_kind("lit_num_oct", true);
-        pub static ref LIT_NUM: u16 = super::language().id_for_node_kind("lit_num", true);
-        pub static ref LIT_STRING: u16 = super::language().id_for_node_kind("lit_string", true);
-        pub static ref LIT_VEC: u16 = super::language().id_for_node_kind("lit_vec", true);
-        pub static ref MODULE_ALIAS: u16 = super::language().id_for_node_kind("module_alias", true);
-        pub static ref MODULE_PATH: u16 = super::language().id_for_node_kind("module_path", true);
-        pub static ref NAME_ARG: u16 = super::language().id_for_node_kind("name_arg", true);
-        pub static ref NAME_CONS: u16 = super::language().id_for_node_kind("name_cons", true);
-        pub static ref NAME_FIELD: u16 = super::language().id_for_node_kind("name_field", true);
-        pub static ref NAME_FUNC: u16 = super::language().id_for_node_kind("name_func", true);
-        pub static ref NAME_INDEX: u16 = super::language().id_for_node_kind("name_index", true);
-        pub static ref NAME_REL: u16 = super::language().id_for_node_kind("name_rel", true);
-        pub static ref NAME_TRANS: u16 = super::language().id_for_node_kind("name_trans", true);
-        pub static ref NAME_TYPE: u16 = super::language().id_for_node_kind("name_type", true);
-        pub static ref NAME_VAR_TERM: u16 = super::language().id_for_node_kind("name_var_term", true);
-        pub static ref NAME_VAR_TYPE: u16 = super::language().id_for_node_kind("name_var_type", true);
-        pub static ref NAME: u16 = super::language().id_for_node_kind("name", true);
-        pub static ref PAT_CONS_POS: u16 = super::language().id_for_node_kind("pat_cons_pos", true);
-        pub static ref PAT_CONS_REC: u16 = super::language().id_for_node_kind("pat_cons_rec", true);
-        pub static ref PAT_CONS: u16 = super::language().id_for_node_kind("pat_cons", true);
-        pub static ref PAT_LIT: u16 = super::language().id_for_node_kind("pat_lit", true);
-        pub static ref PAT_TERM_DECL_VAR: u16 = super::language().id_for_node_kind("pat_term_decl_var", true);
-        pub static ref PAT_TUPLE: u16 = super::language().id_for_node_kind("pat_tuple", true);
-        pub static ref PAT_TYPE: u16 = super::language().id_for_node_kind("pat_type", true);
-        pub static ref PAT_WILD: u16 = super::language().id_for_node_kind("pat_wild", true);
-        pub static ref PAT: u16 = super::language().id_for_node_kind("pat", true);
-        pub static ref REL_ARGS: u16 = super::language().id_for_node_kind("rel_args", true);
-        pub static ref REL_ELEM: u16 = super::language().id_for_node_kind("rel_elem", true);
-        pub static ref REL_ROLE: u16 = super::language().id_for_node_kind("rel_role", true);
-        pub static ref REL_SEMANTICS: u16 = super::language().id_for_node_kind("rel_semantics", true);
-        pub static ref REL: u16 = super::language().id_for_node_kind("rel", true);
-        pub static ref RHS_ATOM_NEG: u16 = super::language().id_for_node_kind("rhs_atom_neg", true);
-        pub static ref RHS_FLAT_MAP: u16 = super::language().id_for_node_kind("rhs_flat_map", true);
-        pub static ref RHS_GROUPING: u16 = super::language().id_for_node_kind("rhs_grouping", true);
-        pub static ref RHS_INSPECT: u16 = super::language().id_for_node_kind("rhs_inspect", true);
-        pub static ref RHS: u16 = super::language().id_for_node_kind("rhs", true);
-        pub static ref ROOT: u16 = super::language().id_for_node_kind("ROOT", true);
-        pub static ref RULE: u16 = super::language().id_for_node_kind("rule", true);
-        pub static ref STATEMENT_ASSIGN: u16 = super::language().id_for_node_kind("statement_assign", true);
-        pub static ref STATEMENT_BLOCK: u16 = super::language().id_for_node_kind("statement_block", true);
-        pub static ref STATEMENT_EMPTY: u16 = super::language().id_for_node_kind("statement_empty", true);
-        pub static ref STATEMENT_FOR: u16 = super::language().id_for_node_kind("statement_for", true);
-        pub static ref STATEMENT_IF: u16 = super::language().id_for_node_kind("statement_if", true);
-        pub static ref STATEMENT_INSERT: u16 = super::language().id_for_node_kind("statement_insert", true);
-        pub static ref STATEMENT_MATCH: u16 = super::language().id_for_node_kind("statement_match", true);
-        pub static ref STATEMENT: u16 = super::language().id_for_node_kind("statement", true);
-        pub static ref STRING_QUOTED_ESCAPE: u16 = super::language().id_for_node_kind("string_quoted_escape", true);
-        pub static ref STRING_QUOTED: u16 = super::language().id_for_node_kind("string_quoted", true);
-        pub static ref STRING_RAW_INTERPOLATED: u16 =
-            super::language().id_for_node_kind("string_raw_interpolated", true);
-        pub static ref STRING_RAW: u16 = super::language().id_for_node_kind("string_raw", true);
-        pub static ref TRANSFORMER: u16 = super::language().id_for_node_kind("transformer", true);
-        pub static ref TYPE_ATOM: u16 = super::language().id_for_node_kind("type_atom", true);
-        pub static ref TYPE_BIGINT: u16 = super::language().id_for_node_kind("type_bigint", true);
-        pub static ref TYPE_BIT: u16 = super::language().id_for_node_kind("type_bit", true);
-        pub static ref TYPE_BOOL: u16 = super::language().id_for_node_kind("type_bool", true);
-        pub static ref TYPE_DOUBLE: u16 = super::language().id_for_node_kind("type_double", true);
-        pub static ref TYPE_FLOAT: u16 = super::language().id_for_node_kind("type_float", true);
-        pub static ref TYPE_FUN: u16 = super::language().id_for_node_kind("type_fun", true);
-        pub static ref TYPE_SIGNED: u16 = super::language().id_for_node_kind("type_signed", true);
-        pub static ref TYPE_STRING: u16 = super::language().id_for_node_kind("type_string", true);
-        pub static ref TYPE_TRANS_FUN: u16 = super::language().id_for_node_kind("type_trans_fun", true);
-        pub static ref TYPE_TRANS_REL: u16 = super::language().id_for_node_kind("type_trans_rel", true);
-        pub static ref TYPE_TRANS: u16 = super::language().id_for_node_kind("type_trans", true);
-        pub static ref TYPE_TUPLE: u16 = super::language().id_for_node_kind("type_tuple", true);
-        pub static ref TYPE_UNION: u16 = super::language().id_for_node_kind("type_union", true);
-        pub static ref TYPE_USER: u16 = super::language().id_for_node_kind("type_user", true);
-        pub static ref TYPE_VAR: u16 = super::language().id_for_node_kind("type_var", true);
-        pub static ref TYPE: u16 = super::language().id_for_node_kind("type", true);
-        pub static ref TYPEDEF_EXTERN: u16 = super::language().id_for_node_kind("typedef_extern", true);
-        pub static ref TYPEDEF_NORMAL: u16 = super::language().id_for_node_kind("typedef_normal", true);
-        pub static ref TYPEDEF: u16 = super::language().id_for_node_kind("typedef", true);
-        pub static ref WORD: u16 = super::language().id_for_node_kind("word", true);
+    ddlog_lsp_macros::node_kind_ids! {
+        language: "ddlog.dl",
+        node_kinds: [
+            (ANNOTATED_ITEM, "annotated_item", true),
+            (APPLY, "apply", true),
+            (ARG_OPT_TYPE, "arg_opt_type", true),
+            (ARG_TRANS, "arg_trans", true),
+            (ARG, "arg", true),
+            (ATOM_ELEM, "atom_elem", true),
+            (ATOM_POS, "atom_pos", true),
+            (ATOM_REC, "atom_rec", true),
+            (ATOM, "atom", true),
+            (ATTRIBUTE, "attribute", true),
+            (ATTRIBUTES, "attributes", true),
+            (COMMENT_BLOCK, "comment_block", true),
+            (COMMENT_LINE, "comment_line", true),
+            (CONS_POS, "cons_pos", true),
+            (CONS_REC, "cons_rec", true),
+            (CONS, "cons", true),
+            (ESCAPE_SEQUENCE_INTERPOLATED, "escape_sequence_interpolated", true),
+            (ESCAPE_SEQUENCE, "escape_sequence", true),
+            (EXP_ADD, "exp_add", true),
+            (EXP_ASSIGN, "exp_assign", true),
+            (EXP_BINDING, "exp_binding", true),
+            (EXP_BIT_AND, "exp_bit_and", true),
+            (EXP_BIT_NEG, "exp_bit_neg", true),
+            (EXP_BIT_OR, "exp_bit_or", true),
+            (EXP_BIT_SLICE, "exp_bit_slice", true),
+            (EXP_BIT_XOR, "exp_bit_xor", true),
+            (EXP_BLOCK, "exp_block", true),
+            (EXP_BREAK, "exp_break", true),
+            (EXP_CAST, "exp_cast", true),
+            (EXP_CAT, "exp_cat", true),
+            (EXP_COND, "exp_cond", true),
+            (EXP_CONS_POS, "exp_cons_pos", true),
+            (EXP_CONS_REC, "exp_cons_rec", true),
+            (EXP_CONTINUE, "exp_continue", true),
+            (EXP_DECL_VAR, "exp_decl_var", true),
+            (EXP_DIV, "exp_div", true),
+            (EXP_EQ, "exp_eq", true),
+            (EXP_FIELD, "exp_field", true),
+            (EXP_FOR, "exp_for", true),
+            (EXP_FUN_CALL_DOT, "exp_fun_call_dot", true),
+            (EXP_FUN_CALL, "exp_fun_call", true),
+            (EXP_GT, "exp_gt", true),
+            (EXP_GTEQ, "exp_gteq", true),
+            (EXP_LAMBDA, "exp_lambda", true),
+            (EXP_LIT, "exp_lit", true),
+            (EXP_LOG_AND, "exp_log_and", true),
+            (EXP_LOG_IMP, "exp_log_imp", true),
+            (EXP_LOG_NEG, "exp_log_neg", true),
+            (EXP_LOG_OR, "exp_log_or", true),
+            (EXP_LT, "exp_lt", true),
+            (EXP_LTEQ, "exp_lteq", true),
+            (EXP_MATCH, "exp_match", true),
+            (EXP_MUL, "exp_mul", true),
+            (EXP_NEG, "exp_neg", true),
+            (EXP_NEQ, "exp_neq", true),
+            (EXP_PROJ, "exp_proj", true),
+            (EXP_REF, "exp_ref", true),
+            (EXP_REM, "exp_rem", true),
+            (EXP_RETURN, "exp_return", true),
+            (EXP_SEQ, "exp_seq", true),
+            (EXP_SHL, "exp_shl", true),
+            (EXP_SHR, "exp_shr", true),
+            (EXP_SLICE, "exp_slice", true),
+            (EXP_SUB, "exp_sub", true),
+            (EXP_TRY, "exp_try", true),
+            (EXP_TUPLE, "exp_tuple", true),
+            (EXP_TYPE, "exp_type", true),
+            (EXP_WILD, "exp_wild", true),
+            (EXP, "exp", true),
+            (FIELD, "field", true),
+            (FUNCTION_EXTERN, "function_extern", true),
+            (FUNCTION_NORMAL, "function_normal", true),
+            (FUNCTION, "function", true),
+            (IDENT_LOWER_SCOPED, "ident_lower_scoped", true),
+            (IDENT_UPPER_SCOPED, "ident_upper_scoped", true),
+            (IDENT, "ident", true),
+            (IMPORT, "import", true),
+            (INDEX, "index", true),
+            (INTERPOLATION, "interpolation", true),
+            (ITEM, "item", true),
+            (KEY_PRIMARY, "key_primary", true),
+            (LIT_BOOL, "lit_bool", true),
+            (LIT_MAP, "lit_map", true),
+            (LIT_NUM_BIN, "lit_num_bin", true),
+            (LIT_NUM_DEC, "lit_num_dec", true),
+            (LIT_NUM_FLOAT, "lit_num_float", true),
+            (LIT_NUM_HEX, "lit_num_hex", true),
+            (LIT_NUM_OCT, "lit_num_oct", true),
+            (LIT_NUM, "lit_num", true),
+            (LIT_STRING, "lit_string", true),
+            (LIT_VEC, "lit_vec", true),
+            (MODULE_ALIAS, "module_alias", true),
+            (MODULE_PATH, "module_path", true),
+            (NAME_ARG, "name_arg", true),
+            (NAME_CONS, "name_cons", true),
+            (NAME_FIELD, "name_field", true),
+            (NAME_FUNC, "name_func", true),
+            (NAME_INDEX, "name_index", true),
+            (NAME_REL, "name_rel", true),
+            (NAME_TRANS, "name_trans", true),
+            (NAME_TYPE, "name_type", true),
+            (NAME_VAR_TERM, "name_var_term", true),
+            (NAME_VAR_TYPE, "name_var_type", true),
+            (NAME, "name", true),
+            (PAT_CONS_POS, "pat_cons_pos", true),
+            (PAT_CONS_REC, "pat_cons_rec", true),
+            (PAT_CONS, "pat_cons", true),
+            (PAT_LIT, "pat_lit", true),
+            (PAT_TERM_DECL_VAR, "pat_term_decl_var", true),
+            (PAT_TUPLE, "pat_tuple", true),
+            (PAT_TYPE, "pat_type", true),
+            (PAT_WILD, "pat_wild", true),
+            (PAT, "pat", true),
+            (REL_ARGS, "rel_args", true),
+            (REL_ELEM, "rel_elem", true),
+            (REL_ROLE, "rel_role", true),
+            (REL_SEMANTICS, "rel_semantics", true),
+            (REL, "rel", true),
+            (RHS_ATOM_NEG, "rhs_atom_neg", true),
+            (RHS_FLAT_MAP, "rhs_flat_map", true),
+            (RHS_GROUPING, "rhs_grouping", true),
+            (RHS_INSPECT, "rhs_inspect", true),
+            (RHS, "rhs", true),
+            (ROOT, "ROOT", true),
+            (RULE, "rule", true),
+            (STATEMENT_ASSIGN, "statement_assign", true),
+            (STATEMENT_BLOCK, "statement_block", true),
+            (STATEMENT_EMPTY, "statement_empty", true),
+            (STATEMENT_FOR, "statement_for", true),
+            (STATEMENT_IF, "statement_if", true),
+            (STATEMENT_INSERT, "statement_insert", true),
+            (STATEMENT_MATCH, "statement_match", true),
+            (STATEMENT, "statement", true),
+            (STRING_QUOTED_ESCAPE, "string_quoted_escape", true),
+            (STRING_QUOTED, "string_quoted", true),
+            (STRING_RAW_INTERPOLATED, "string_raw_interpolated", true),
+            (STRING_RAW, "string_raw", true),
+            (TRANSFORMER, "transformer", true),
+            (TYPE_ATOM, "type_atom", true),
+            (TYPE_BIGINT, "type_bigint", true),
+            (TYPE_BIT, "type_bit", true),
+            (TYPE_BOOL, "type_bool", true),
+            (TYPE_DOUBLE, "type_double", true),
+            (TYPE_FLOAT, "type_float", true),
+            (TYPE_FUN, "type_fun", true),
+            (TYPE_SIGNED, "type_signed", true),
+            (TYPE_STRING, "type_string", true),
+            (TYPE_TRANS_FUN, "type_trans_fun", true),
+            (TYPE_TRANS_REL, "type_trans_rel", true),
+            (TYPE_TRANS, "type_trans", true),
+            (TYPE_TUPLE, "type_tuple", true),
+            (TYPE_UNION, "type_union", true),
+            (TYPE_USER, "type_user", true),
+            (TYPE_VAR, "type_var", true),
+            (TYPE, "type", true),
+            (TYPEDEF_EXTERN, "typedef_extern", true),
+            (TYPEDEF_NORMAL, "typedef_normal", true),
+            (TYPEDEF, "typedef", true),
+            (WORD, "word", true),
+        ],
     }
 }

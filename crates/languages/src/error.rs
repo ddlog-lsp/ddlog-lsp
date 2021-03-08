@@ -1,5 +1,3 @@
-//! Core definitions related to runtime errors.
-
 use std::path::PathBuf;
 use thiserror::Error;
 

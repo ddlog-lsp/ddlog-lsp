@@ -166,6 +166,7 @@ FLAGS:
             cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-languages"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
             cmd.args(&["--package", "ddlog-lsp-syntax"]);
@@ -204,6 +205,7 @@ FLAGS:
             cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-languages"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
             cmd.args(&["--package", "ddlog-lsp-syntax"]);
@@ -358,6 +360,7 @@ FLAGS:
                 "--packages",
                 "xtask",
                 "ddlog-lsp-cli",
+                "ddlog-lsp-languages",
                 "ddlog-lsp-macros",
                 "ddlog-lsp-server",
                 "ddlog-lsp-syntax",
@@ -415,6 +418,7 @@ FLAGS:
             cmd.args(&["--examples", "--lib", "--tests"]);
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-languages"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
             cmd.args(&["--package", "ddlog-lsp-syntax"]);
@@ -453,6 +457,7 @@ FLAGS:
             cmd.args(&["--all-targets"]);
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
+            cmd.args(&["--package", "ddlog-lsp-languages"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
             cmd.args(&["--package", "ddlog-lsp-syntax"]);
