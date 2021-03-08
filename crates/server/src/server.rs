@@ -27,8 +27,8 @@ pub fn capabilities() -> lsp::ServerCapabilities {
     };
 
     lsp::ServerCapabilities {
-        document_symbol_provider,
         text_document_sync,
+        document_symbol_provider,
         ..Default::default()
     }
 }
