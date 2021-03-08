@@ -1,4 +1,4 @@
-//! Core functionality related to document languages.
+//! Functionality related to [`tree-sitter::Language`].
 
 /// Functions for working with the `.dat` grammar.
 pub mod dat;
