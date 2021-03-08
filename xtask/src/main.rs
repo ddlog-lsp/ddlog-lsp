@@ -167,8 +167,8 @@ FLAGS:
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
-            cmd.args(&["--package", "ddlog-lsp-parsers"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-syntax"]);
             cmd.args(cargo_args);
             cmd.status()?;
 
@@ -205,8 +205,8 @@ FLAGS:
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
-            cmd.args(&["--package", "ddlog-lsp-parsers"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-syntax"]);
             cmd.args(cargo_args);
             cmd.args(&["--", "-D", "warnings"]);
             cmd.status()?;
@@ -359,8 +359,8 @@ FLAGS:
                 "xtask",
                 "ddlog-lsp-cli",
                 "ddlog-lsp-macros",
-                "ddlog-lsp-parsers",
                 "ddlog-lsp-server",
+                "ddlog-lsp-syntax",
             ]);
             cmd.args(&[
                 "--exclude-files",
@@ -416,8 +416,8 @@ FLAGS:
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
-            cmd.args(&["--package", "ddlog-lsp-parsers"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-syntax"]);
             cmd.args(cargo_args);
             cmd.status()?;
 
@@ -454,8 +454,8 @@ FLAGS:
             cmd.args(&["--package", "xtask"]);
             cmd.args(&["--package", "ddlog-lsp-cli"]);
             cmd.args(&["--package", "ddlog-lsp-macros"]);
-            cmd.args(&["--package", "ddlog-lsp-parsers"]);
             cmd.args(&["--package", "ddlog-lsp-server"]);
+            cmd.args(&["--package", "ddlog-lsp-syntax"]);
             cmd.args(cargo_args);
             cmd.status()?;
 
