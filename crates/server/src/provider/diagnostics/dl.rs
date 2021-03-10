@@ -9,6 +9,7 @@ pub fn diagnostics(tree: &tree_sitter::Tree, content: &ropey::Rope) -> Vec<lsp::
         NodeWalker::new(language, node)
     };
 
+    let mut previous = walker.node();
     let mut covering_error_range = None::<tree_sitter::Range>;
 
     loop {
@@ -16,13 +17,14 @@ pub fn diagnostics(tree: &tree_sitter::Tree, content: &ropey::Rope) -> Vec<lsp::
             break;
         }
 
-        let node = walker.node();
+        let current = walker.node();
 
-        if node.is_error() {
-            let range = node.range();
+        if current.is_error() {
+            let range = current.range();
             match covering_error_range {
                 Some(ref error_range) if error_range.contains(&range) => {
-                    walker.goto_next_has_error();
+                    previous = current;
+                    walker.goto_next();
                     continue;
                 },
                 _ => {
@@ -38,22 +40,24 @@ pub fn diagnostics(tree: &tree_sitter::Tree, content: &ropey::Rope) -> Vec<lsp::
                 message,
                 ..Default::default()
             });
-            walker.goto_next_has_error();
+            previous = current;
+            walker.goto_next();
             continue;
         }
 
-        if node.is_missing() {
-            let range = node.range();
+        if current.is_missing() {
+            let range = current.range();
             match covering_error_range {
                 Some(ref error_range) if error_range.contains(&range) => {
-                    walker.goto_next_has_error();
+                    previous = current;
+                    walker.goto_next();
                     continue;
                 },
                 _ => {
                     covering_error_range = Some(range.clone());
                 },
             }
-            let message = String::from("MISSING node");
+            let message = format!(r#"expected "{}" after "{}""#, current.kind(), previous.kind());
             let range = content.tree_sitter_range_to_lsp_range(range);
             let severity = Some(lsp::DiagnosticSeverity::Error);
             diagnostics.push(lsp::Diagnostic {
@@ -62,12 +66,14 @@ pub fn diagnostics(tree: &tree_sitter::Tree, content: &ropey::Rope) -> Vec<lsp::
                 message,
                 ..Default::default()
             });
-            walker.goto_next_has_error();
+            previous = current;
+            walker.goto_next();
             continue;
         }
 
         // catch all case
-        walker.goto_next_has_error();
+        previous = current;
+        walker.goto_next();
     }
 
     diagnostics.reverse();
