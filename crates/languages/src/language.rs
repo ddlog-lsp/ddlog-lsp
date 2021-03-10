@@ -1,6 +1,5 @@
 //! Functions for creating [`tree-sitter::Language`].
 
-use crate::error::Error;
 use std::{convert::TryFrom, path::Path};
 
 /// Tree-sitter language for the `.dat` grammar.
@@ -68,6 +67,7 @@ impl TryFrom<&str> for Language {
     type Error = anyhow::Error;
 
     fn try_from(language_id: &str) -> anyhow::Result<Self> {
+        use crate::error::Error;
         match language_id {
             "ddlog.dat" => Ok(Language::DDlogDat),
             "ddlog.dl" => Ok(Language::DDlogDl),
@@ -80,6 +80,7 @@ impl TryFrom<&Path> for Language {
     type Error = anyhow::Error;
 
     fn try_from(path: &Path) -> anyhow::Result<Self> {
+        use crate::error::Error;
         let file_ext = path
             .extension()
             .ok_or_else(|| Error::PathExtensionFailed(path.into()))?;
