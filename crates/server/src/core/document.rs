@@ -22,7 +22,7 @@ impl Document {
         let result = {
             let content = content.clone();
             let byte_idx = 0;
-            let callback = content.chunk_walker(byte_idx).callback_adapter();
+            let callback = content.chunk_walker(byte_idx).callback_adapter_for_tree_sitter();
             let old_tree = None;
             parser.parse_with(callback, old_tree)?
         };
@@ -46,7 +46,10 @@ impl Document {
 
             let callback = {
                 let byte_idx = 0;
-                content.clone().chunk_walker(byte_idx).callback_adapter()
+                content
+                    .clone()
+                    .chunk_walker(byte_idx)
+                    .callback_adapter_for_tree_sitter()
             };
 
             let old_tree = session.get_mut_tree(uri).await?;

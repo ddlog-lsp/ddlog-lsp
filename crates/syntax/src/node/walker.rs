@@ -1,191 +1,95 @@
+use crate::{
+    error::SyntaxError,
+    language::{dat, dl, NodeMove},
+    node::NodeExt,
+};
 use ddlog_lsp_languages::language::Language;
 
 #[allow(missing_docs)]
-pub mod context {
-    use tree_sitter::Node;
-
-    pub trait Context<'tree> {
-        type Level;
-
-        fn new() -> Self;
-
-        fn pop(&mut self) -> Option<Self::Level>;
-
-        fn push(&mut self, level: Self::Level);
-
-        fn push_ancestor(&mut self, ancestor: Node<'tree>, prefixed: Vec<Node<'tree>>);
-
-        fn push_prefix(&mut self, prefix: Node<'tree>);
-
-        fn reverse(&mut self);
-    }
-
-    pub mod basic {
-        use std::convert::Infallible;
-        use tree_sitter::Node;
-
-        #[derive(Debug, Clone, Eq, Hash, PartialEq)]
-        pub struct Level<'tree> {
-            phantom: std::marker::PhantomData<&'tree Infallible>,
-        }
-
-        #[derive(Debug, Default, Clone, Eq, Hash, PartialEq)]
-        pub struct Context<'tree> {
-            phantom: std::marker::PhantomData<&'tree Infallible>,
-        }
-
-        impl<'tree> super::Context<'tree> for Context<'tree> {
-            type Level = Level<'tree>;
-
-            fn new() -> Self {
-                Self::default()
-            }
-
-            fn pop(&mut self) -> Option<Self::Level> {
-                None
-            }
-
-            fn push(&mut self, _: Self::Level) {
-            }
-
-            fn push_ancestor(&mut self, _: Node<'tree>, _: Vec<Node<'tree>>) {
-            }
-
-            fn push_prefix(&mut self, _: Node<'tree>) {
-            }
-
-            fn reverse(&mut self) {
-            }
-        }
-    }
-
-    pub mod trace {
-        use tree_sitter::Node;
-
-        #[derive(Debug, Clone, Eq, Hash, PartialEq)]
-        pub struct Level<'tree> {
-            ancestor: Node<'tree>,
-            prefixed: Vec<Node<'tree>>,
-        }
-
-        /// The current node context.
-        #[derive(Debug, Default, Clone, Eq, Hash, PartialEq)]
-        pub struct Context<'tree> {
-            stack: Vec<Level<'tree>>,
-        }
-
-        impl<'tree> super::Context<'tree> for Context<'tree> {
-            type Level = Level<'tree>;
-
-            fn new() -> Self {
-                Self::default()
-            }
-
-            fn pop(&mut self) -> Option<Self::Level> {
-                self.stack.pop()
-            }
-
-            fn push(&mut self, level: Self::Level) {
-                self.stack.push(level);
-            }
-
-            fn push_ancestor(&mut self, ancestor: Node<'tree>, prefixed: Vec<Node<'tree>>) {
-                let level = Level { ancestor, prefixed };
-                self.stack.push(level);
-            }
-
-            fn push_prefix(&mut self, prefix: Node<'tree>) {
-                if let Some(level) = self.stack.last_mut() {
-                    level.prefixed.push(prefix);
-                } else {
-                    unreachable!("NodeWalkerContext::push_prefix should never be callable wihout an active level");
-                }
-            }
-
-            fn reverse(&mut self) {
-                self.stack.reverse();
-            }
-        }
-    }
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum StepValue<'tree> {
+    Done,
+    None,
+    Some(tree_sitter::Node<'tree>),
 }
 
-pub use context::Context;
-
 #[allow(missing_docs)]
-pub struct NodeWalker<'tree, C> {
+pub struct NodeWalker<'tree> {
     language: Language,
-    pub context: C,
-    cursor: tree_sitter::TreeCursor<'tree>,
+    node: tree_sitter::Node<'tree>,
     pub done: bool,
 }
 
-impl<'tree, C: Context<'tree>> NodeWalker<'tree, C> {
+#[allow(missing_docs)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum GotoNext {
+    StepInto,
+    StepOver,
+}
+
+impl<'tree> NodeWalker<'tree> {
     /// Create a new [NodeWalker].
-    #[inline]
     pub fn new(language: Language, node: tree_sitter::Node<'tree>) -> Self {
-        let context = C::new();
-        let cursor = node.walk();
-        let done = false;
-        let mut walker = Self {
-            language,
-            context,
-            cursor,
-            done,
-        };
-        walker.reconstruct_stack();
-        walker
+        let done = Default::default();
+        Self { language, node, done }
     }
 
     /// Move the cursor to the first child node.
-    #[inline]
     pub fn goto_first_child(&mut self) -> bool {
-        let ancestor = self.cursor.node();
-        let moved = self.cursor.goto_first_child();
-        if moved {
-            let prefixed = Default::default();
-            self.context.push_ancestor(ancestor, prefixed);
+        let mut moved = false;
+
+        if let Some(node) = self.node.first_child() {
+            self.node = node;
+            moved = true;
         }
+
         moved
     }
 
     /// Move the cursor to the next sibling node.
-    #[inline]
     pub fn goto_next_sibling(&mut self) -> bool {
-        let prefix = self.cursor.node();
-        let moved = self.cursor.goto_next_sibling();
-        if moved {
-            self.context.push_prefix(prefix);
+        let mut moved = false;
+
+        if let Some(node) = self.node.next_sibling() {
+            self.node = node;
+            moved = true;
         }
+
         moved
     }
 
     /// Move cursor to the next accessible node.
-    #[inline]
-    pub fn goto_next(&mut self) -> bool {
-        let mut moved;
+    pub fn goto_next(&mut self, goto_next: GotoNext, skip_extras: bool) -> bool {
+        let mut moved = false;
 
         // First try to descend to the first child node.
-        moved = self.goto_first_child();
-        if !moved {
+        if goto_next == GotoNext::StepInto {
+            moved = self.goto_first_child();
+        }
+
+        if !moved || goto_next == GotoNext::StepOver {
             // Otherwise try to move to the next sibling node.
             moved = self.goto_next_sibling();
             if !moved {
+                // Otherwise try to move to the next ancestor sibling node.
                 moved = self.goto_next_ancestor_sibling();
             }
+        }
+
+        if skip_extras {
+            self.skip_extras();
         }
 
         moved
     }
 
     /// Move cursor to the next accessible node that has an error.
-    #[inline]
-    pub fn goto_next_has_error(&mut self) -> bool {
-        let node = self.cursor.node();
+    pub fn goto_next_has_error(&mut self, mode: GotoNext, skip_extras: bool) -> bool {
         let mut moved;
 
         // Only descend if the current node has an error in the subtree.
-        if node.has_error() {
-            moved = self.goto_next();
+        if self.node.has_error() {
+            moved = self.goto_next(mode, skip_extras);
         } else {
             // Otherwise try to move to the next sibling node.
             moved = self.goto_next_sibling();
@@ -198,7 +102,6 @@ impl<'tree, C: Context<'tree>> NodeWalker<'tree, C> {
     }
 
     /// Move the cursor to the next ancestor sibling node.
-    #[inline]
     pub fn goto_next_ancestor_sibling(&mut self) -> bool {
         let mut moved;
         let mut finished = true;
@@ -218,66 +121,111 @@ impl<'tree, C: Context<'tree>> NodeWalker<'tree, C> {
         }
 
         self.done = finished;
+
         moved
     }
 
     /// Move the cursor to the parent node.
-    #[inline]
     pub fn goto_parent(&mut self) -> bool {
-        let moved = self.cursor.goto_parent();
-        if moved {
-            self.context.pop();
+        let mut moved = false;
+
+        if let Some(node) = self.node.parent() {
+            self.node = node;
+            moved = true;
+        }
+
+        moved
+    }
+
+    // FIXME
+    fn skip_extras(&mut self) -> bool {
+        #[rustfmt::skip]
+        let extras: &[u16] = match self.language() {
+            Language::DDlogDat => &[dat::kind::COMMENT_LINE],
+            Language::DDlogDl  => &[ dl::kind::COMMENT_LINE, dl::kind::COMMENT_BLOCK],
+        };
+        let mut moved = false;
+        loop {
+            if !extras.contains(&self.node.kind_id()) {
+                break;
+            }
+            moved = self.goto_next(GotoNext::StepOver, false);
         }
         moved
     }
 
     /// Return the current node's kind id.
-    #[inline]
     pub fn kind(&self) -> u16 {
-        self.cursor.node().kind_id()
+        self.node.kind_id()
+    }
+
+    #[allow(missing_docs)]
+    pub fn language(&self) -> Language {
+        self.language
     }
 
     /// Return the current node for the cursor.
-    #[inline]
     pub fn node(&self) -> tree_sitter::Node<'tree> {
-        self.cursor.node()
+        self.node
     }
 
-    /// Reconstruct the context stack from the current node position.
-    #[inline]
-    fn reconstruct_stack(&mut self) {
-        use crate::language::{dat, dl};
-        use Language::{DDlogDat, DDlogDl};
+    #[allow(missing_docs)]
+    pub fn reset(&mut self, node: tree_sitter::Node<'tree>) {
+        self.node = node;
+    }
 
-        let language = self.language;
-        let node = self.node();
-        let kind = node.kind_id();
+    #[allow(missing_docs)]
+    pub fn step(
+        &mut self,
+        want_kind: u16,
+        node_move: NodeMove,
+        goto_next: GotoNext,
+    ) -> Result<tree_sitter::Node<'tree>, SyntaxError<()>> {
+        let prev_node = self.node();
 
-        // Reconstruct the stack by traversing upward if the current node isn't ROOT.
-        if (language == DDlogDat && dat::kind::ROOT != kind) || (language == DDlogDl && dl::kind::ROOT != kind) {
-            let cursor = &mut node.walk();
-            loop {
-                let previous = self.node();
-                if self.goto_parent() {
-                    let ancestor = self.node();
-                    let prefixed = ancestor
-                        .children(cursor)
-                        .take_while(|node| node.id() != previous.id())
-                        .collect();
-                    self.context.push_ancestor(ancestor, prefixed)
-                } else {
-                    break;
-                }
-            }
+        // Conditionally move to the next node in the syntax tree; if a move was
+        // attempted, record success or failure.
+        let node_move = match node_move {
+            NodeMove::Init => {
+                self.skip_extras();
+                true
+            },
+            NodeMove::Step => self.goto_next(goto_next, true),
+        };
 
-            self.context.reverse();
-            self.cursor.reset(node);
+        // If a move was attempted and failed, return an error.
+        if !node_move {
+            let language = self.language;
+            let range = self.node.range();
+            let data = ();
+            let error = SyntaxError::walker_move_error(language, range, data);
+            return Err(error);
         }
+
+        // Collect info on the destination node.
+        let dest_node = self.node();
+        let dest_kind = dest_node.kind_id();
+
+        // If the destination node is a tree-sitter MISSING node, return an error.
+        if dest_node.is_missing() {
+            let language = self.language;
+            let range = self.node.range();
+            let data = ();
+            let error = SyntaxError::node_missing_error(language, range, data);
+            self.reset(prev_node);
+            return Err(error);
+        }
+
+        // If the destination node kind is not the expected node kind, return an error.
+        if dest_kind != want_kind {
+            let language = self.language;
+            let range = self.node.range();
+            let data = ();
+            let error = SyntaxError::node_mismatch_error(language, range, dest_kind, want_kind, data);
+            return Err(error);
+        }
+
+        // Otherwise return the destination node.
+        Ok(dest_node)
     }
 }
-
-#[allow(missing_docs)]
-pub type BasicNodeWalker<'tree> = NodeWalker<'tree, context::basic::Context<'tree>>;
-
-#[allow(missing_docs)]
-pub type TraceNodeWalker<'tree> = NodeWalker<'tree, context::trace::Context<'tree>>;

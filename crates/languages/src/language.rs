@@ -18,7 +18,7 @@ pub fn dat() -> tree_sitter::Language {
     let bytes: &[u8] = include_bytes!("../../../vendor/tree-sitter-ddlog/ddlog/dat/tree-sitter-ddlog_dat.wasm");
     let promise = web_tree_sitter_sys::Language::load_bytes(&bytes.into());
     let future = JsFuture::from(promise);
-    let result = futures::future::block_on(future).unwrap();
+    let result = futures::executor::block_on(future).unwrap();
     let inner = result.unchecked_into::<web_tree_sitter_sys::Language>();
     inner.into()
 }
@@ -39,7 +39,7 @@ pub fn dl() -> tree_sitter::Language {
     let bytes: &[u8] = include_bytes!("../../../vendor/tree-sitter-ddlog/ddlog/dl/tree-sitter-ddlog_dl.wasm");
     let promise = web_tree_sitter_sys::Language::load_bytes(&bytes.into());
     let future = JsFuture::from(promise);
-    let result = futures::future::block_on(future).unwrap();
+    let result = futures::executor::block_on(future).unwrap();
     let inner = result.unchecked_into::<web_tree_sitter_sys::Language>();
     inner.into()
 }
@@ -87,5 +87,14 @@ impl TryFrom<&Path> for Language {
         let file_ext = file_ext.to_str().ok_or(Error::OsStrToStrFailed)?;
         let language_id = format!("ddlog.{}", file_ext);
         Language::try_from(language_id.as_str())
+    }
+}
+
+impl From<Language> for tree_sitter::Language {
+    fn from(value: Language) -> tree_sitter::Language {
+        match value {
+            Language::DDlogDat => dat(),
+            Language::DDlogDl => dl(),
+        }
     }
 }

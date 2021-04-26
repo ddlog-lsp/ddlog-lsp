@@ -4,6 +4,9 @@
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 
+/// Functionality related to syntax errors.
+pub mod error;
+
 /// Functionality related to [`tree-sitter::Language`].
 pub mod language;
 

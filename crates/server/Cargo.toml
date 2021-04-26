@@ -22,7 +22,7 @@ runtime-tokio = ["lspower/runtime-tokio", "tokio", "tokio/rt-multi-thread"]
 
 [build-dependencies]
 anyhow = "1.0"
-built = { version = "0.4", features = ["git2"] }
+built = { version = "0.5", features = ["git2"] }
 
 [dependencies]
 anyhow = "1.0"
@@ -32,12 +32,12 @@ clap = "2.33"
 dashmap = "4.0"
 ddlog-lsp-languages = { version = "0.0", path = "../languages" }
 ddlog-lsp-syntax = { version = "0.0", path = "../syntax" }
-env_logger = "0.8"
+env_logger = "0.9"
 futures = "0.3"
 log = "0.4"
-lsp = { version = "0.88", package = "lsp-types" }
-lsp-text = "0.0"
-lspower = { version = "1.0", default-features = false }
+lsp = { version = "0.89", package = "lsp-types" }
+lsp-text = { version = "0.1", features = ["tree-sitter"] }
+lspower = { version = "1.1", default-features = false }
 ropey = "1.2"
 serde_json = "1.0"
 thiserror = "1.0"
@@ -45,7 +45,7 @@ tokio = { version = "1.0", features = ["io-std", "sync"], optional = true }
 
 [dependencies.tree-sitter]
 package = "tree-sitter-facade"
-version = "0.0"
+version = "0.1"
 
 [dev-dependencies]
 criterion = "0.3"

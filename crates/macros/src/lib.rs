@@ -8,62 +8,10 @@ use glob::glob;
 use proc_macro::TokenStream;
 use quote::quote;
 
-mod corpus_tests {
-    use syn::parse::{Parse, ParseStream};
-
-    mod keyword {
-        syn::custom_keyword!(corpus);
-        syn::custom_keyword!(include);
-        syn::custom_keyword!(exclude);
-        syn::custom_keyword!(handler);
-    }
-
-    pub(crate) struct MacroInput {
-        pub(crate) corpus: syn::Ident,
-        pub(crate) include: String,
-        pub(crate) exclude: Vec<String>,
-        pub(crate) handler: syn::Expr,
-    }
-
-    impl Parse for MacroInput {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            input.parse::<keyword::corpus>()?;
-            input.parse::<syn::Token![:]>()?;
-            let corpus = input.parse()?;
-            input.parse::<syn::Token![,]>()?;
-
-            input.parse::<keyword::include>()?;
-            input.parse::<syn::Token![:]>()?;
-            let include = input.parse::<syn::LitStr>()?.value();
-            input.parse::<syn::Token![,]>()?;
-
-            let mut exclude = vec![];
-            if input.peek(keyword::exclude) {
-                input.parse::<keyword::exclude>()?;
-                input.parse::<syn::Token![:]>()?;
-                let paths = {
-                    let content;
-                    syn::bracketed!(content in input);
-                    content.parse_terminated::<syn::LitStr, syn::Token![,]>(|b| b.parse())?
-                };
-                exclude = paths.into_iter().map(|s| s.value()).collect();
-                input.parse::<syn::Token![,]>()?;
-            }
-
-            input.parse::<keyword::handler>()?;
-            input.parse::<syn::Token![:]>()?;
-            let handler = input.parse()?;
-            input.parse::<syn::Token![,]>().ok();
-
-            Ok(MacroInput {
-                corpus,
-                include,
-                exclude,
-                handler,
-            })
-        }
-    }
-}
+mod language;
+mod testing;
+mod tree_sitter;
+mod visitor;
 
 /// Generate tests from a corpus of wasm modules on the filesystem.
 ///
@@ -84,12 +32,12 @@ mod corpus_tests {
 /// ```
 #[proc_macro]
 pub fn corpus_tests(input: TokenStream) -> TokenStream {
-    let corpus_tests::MacroInput {
+    let testing::corpus_tests::MacroInput {
         corpus,
         include,
         exclude,
         handler,
-    } = syn::parse_macro_input!(input as corpus_tests::MacroInput);
+    } = syn::parse_macro_input!(input as crate::testing::corpus_tests::MacroInput);
     // Compute a string representation for the corpus name.
     let corpus_name = corpus.to_string();
     let corpus_name = corpus_name.as_str();
@@ -138,81 +86,12 @@ pub fn corpus_tests(input: TokenStream) -> TokenStream {
     module.into()
 }
 
-mod language {
-    use std::convert::TryFrom;
-    use syn::parse::{Parse, ParseStream};
-
-    pub(crate) struct Language(pub(crate) ddlog_lsp_languages::language::Language);
-
-    impl Parse for Language {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            let language = input.parse::<syn::LitStr>()?.value();
-            let language = ddlog_lsp_languages::language::Language::try_from(language.as_str());
-            let language = language.map_err(|_| input.error("invalid language identifier"))?;
-            Ok(Language(language))
-        }
-    }
-}
-
-mod field_ids {
-    use syn::parse::{Parse, ParseStream};
-
-    mod keyword {
-        syn::custom_keyword!(language);
-        syn::custom_keyword!(fields);
-    }
-
-    pub(crate) struct Field {
-        pub(crate) ident: syn::Ident,
-        pub(crate) name: String,
-    }
-
-    impl Parse for Field {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            let content;
-            syn::parenthesized!(content in input);
-            let ident = content.parse()?;
-            content.parse::<syn::Token![,]>()?;
-            let name = content.parse::<syn::LitStr>()?.value();
-            Ok(Field { ident, name })
-        }
-    }
-
-    pub(crate) struct MacroInput {
-        pub(crate) language: super::language::Language,
-        pub(crate) fields: Vec<Field>,
-    }
-
-    impl Parse for MacroInput {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            input.parse::<keyword::language>()?;
-            input.parse::<syn::Token![:]>()?;
-            let language = input.parse()?;
-            input.parse::<syn::Token![,]>()?;
-
-            input.parse::<keyword::fields>()?;
-            input.parse::<syn::Token![:]>()?;
-            let fields = {
-                let content;
-                syn::bracketed!(content in input);
-                content
-                    .parse_terminated::<Field, syn::Token![,]>(|b| b.parse())?
-                    .into_iter()
-                    .collect()
-            };
-            input.parse::<syn::Token![,]>().ok();
-
-            Ok(MacroInput { language, fields })
-        }
-    }
-}
-
 #[allow(missing_docs)]
 #[proc_macro]
 pub fn field_ids(input: TokenStream) -> TokenStream {
     use ddlog_lsp_languages::language;
 
-    let macro_input = syn::parse_macro_input!(input as field_ids::MacroInput);
+    let macro_input = syn::parse_macro_input!(input as crate::tree_sitter::field_ids::MacroInput);
 
     #[allow(unsafe_code)]
     let language = match macro_input.language.0 {
@@ -239,68 +118,12 @@ pub fn field_ids(input: TokenStream) -> TokenStream {
     result.into()
 }
 
-mod node_kind_ids {
-    use syn::parse::{Parse, ParseStream};
-
-    mod keyword {
-        syn::custom_keyword!(language);
-        syn::custom_keyword!(node_kinds);
-    }
-
-    pub(crate) struct NodeKind {
-        pub(crate) ident: syn::Ident,
-        pub(crate) kind: String,
-        pub(crate) named: bool,
-    }
-
-    impl Parse for NodeKind {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            let content;
-            syn::parenthesized!(content in input);
-            let ident = content.parse()?;
-            content.parse::<syn::Token![,]>()?;
-            let kind = content.parse::<syn::LitStr>()?.value();
-            content.parse::<syn::Token![,]>()?;
-            let named = content.parse::<syn::LitBool>()?.value();
-            Ok(NodeKind { ident, kind, named })
-        }
-    }
-
-    pub(crate) struct MacroInput {
-        pub(crate) language: super::language::Language,
-        pub(crate) node_kinds: Vec<NodeKind>,
-    }
-
-    impl Parse for MacroInput {
-        fn parse(input: ParseStream) -> syn::parse::Result<Self> {
-            input.parse::<keyword::language>()?;
-            input.parse::<syn::Token![:]>()?;
-            let language = input.parse()?;
-            input.parse::<syn::Token![,]>()?;
-
-            input.parse::<keyword::node_kinds>()?;
-            input.parse::<syn::Token![:]>()?;
-            let node_kinds = {
-                let content;
-                syn::bracketed!(content in input);
-                content
-                    .parse_terminated::<NodeKind, syn::Token![,]>(|b| b.parse())?
-                    .into_iter()
-                    .collect()
-            };
-            input.parse::<syn::Token![,]>().ok();
-
-            Ok(MacroInput { language, node_kinds })
-        }
-    }
-}
-
 #[allow(missing_docs)]
 #[proc_macro]
 pub fn node_kind_ids(input: TokenStream) -> TokenStream {
     use ddlog_lsp_languages::language;
 
-    let macro_input = syn::parse_macro_input!(input as node_kind_ids::MacroInput);
+    let macro_input = syn::parse_macro_input!(input as crate::tree_sitter::node_kind_ids::MacroInput);
 
     #[allow(unsafe_code)]
     let language = match macro_input.language.0 {
@@ -322,6 +145,101 @@ pub fn node_kind_ids(input: TokenStream) -> TokenStream {
 
     let result = quote! {
         #(#content)*
+    };
+
+    result.into()
+}
+
+#[allow(missing_docs)]
+#[proc_macro]
+pub fn impl_choice(input: TokenStream) -> TokenStream {
+    let crate::visitor::utils::impls::MacroInput { depth } =
+        syn::parse_macro_input!(input as crate::visitor::utils::impls::MacroInput);
+
+    let type_inputs_idents = crate::visitor::utils::idents(depth, Some("I"));
+    let type_inputs_tuple = {
+        let idents = type_inputs_idents.clone();
+        quote! { (#((u16, #idents)),*,) }
+    };
+
+    let type_generics = type_inputs_idents.clone();
+    let type_inputs_where = crate::visitor::utils::parsers_where(type_inputs_idents);
+
+    let alt_inner = {
+        let cases = (0 .. depth).map(|n| {
+            let i = syn::Index::from(n);
+            quote! {
+                match restore(&self.#i.1)(visitor, m) {
+                    Ok(result) => {
+                        // log::info!("matched: {}", #n);
+                        return Ok(());
+                    }
+                    Err(error) => {
+                        // log::info!("error: {:#?}", error);
+                        choices.push((self.#i.0, error));
+                    }
+                }
+            }
+        });
+        quote! {
+            let mut choices = vec![];
+            #(#cases)*
+            let language = visitor.walker().language();
+            let range = visitor.walker().node().range();
+            let data = ();
+            let error = SyntaxError::choice_failure(language, range, choices, data);
+            Err(error)
+        }
+    };
+
+    let result = quote! {
+        impl<'tree, Vis, #(#type_generics),*> Choice<'tree, Vis> for #type_inputs_tuple
+        where
+            Vis: HasWalker<'tree> + ?Sized,
+            #(#type_inputs_where),*
+        {
+            fn choice(&self, visitor: &mut Vis, m: NodeMove) -> Result<(), SyntaxError<()>> {
+                #alt_inner
+            }
+        }
+    };
+
+    result.into()
+}
+
+#[allow(missing_docs)]
+#[proc_macro]
+pub fn impl_seq(input: TokenStream) -> TokenStream {
+    let crate::visitor::utils::impls::MacroInput { depth } =
+        syn::parse_macro_input!(input as crate::visitor::utils::impls::MacroInput);
+
+    let type_inputs_idents = crate::visitor::utils::idents(depth, Some("I"));
+    let type_inputs_tuple = {
+        let idents = type_inputs_idents.clone();
+        quote! { (#(#idents),*,) }
+    };
+
+    let type_generics = type_inputs_idents.clone();
+    let type_inputs_where = crate::visitor::utils::parsers_where(type_inputs_idents);
+
+    let seq_inner = {
+        let accessors = (0 .. depth).map(syn::Index::from);
+        quote! {
+            #(self.#accessors(visitor, m)?);*;
+            Ok(())
+        }
+    };
+
+    let result = quote! {
+        impl<'tree, Vis, #(#type_generics),*> Seq<'tree, Vis> for #type_inputs_tuple
+        where
+            Vis: HasWalker<'tree> + ?Sized,
+            #(#type_inputs_where),*
+        {
+            fn seq(&self, visitor: &mut Vis, m: NodeMove) -> Result<(), SyntaxError<()>> {
+                #seq_inner
+            }
+        }
     };
 
     result.into()
