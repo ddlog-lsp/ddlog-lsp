@@ -2312,12 +2312,8 @@ pub mod visit {
             utils::optional(utils::seq((
                 utils::token(symbol::LEFT_CURLY_BRACKET),
                 utils::optional(utils::seq((
-                    utils::token(symbol::LEFT_CURLY_BRACKET),
-                    utils::optional(utils::seq((
-                        Vis::visit_exp,
-                        utils::repeat(utils::seq((utils::token(symbol::COMMA), Vis::visit_exp))),
-                    ))),
-                    utils::token(symbol::RIGHT_CURLY_BRACKET),
+                    Vis::visit_exp,
+                    utils::repeat(utils::seq((utils::token(symbol::COMMA), Vis::visit_exp))),
                 ))),
                 utils::token(symbol::RIGHT_CURLY_BRACKET),
             ))),
