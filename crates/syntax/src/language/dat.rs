@@ -45,6 +45,8 @@ pub mod kind {
             (DUMP, "dump", true),
             (DUMP_INDEX, "dump_index", true),
             (ECHO, "echo", true),
+            (ESCAPE_SEQUENCE, "escape_sequence", true),
+            (ESCAPE_SEQUENCE_INTERPOLATED, "escape_sequence_interpolated", true),
             (EXIT, "exit", true),
             (EXP, "exp", true),
             (EXP_ADD, "exp_add", true),
@@ -109,6 +111,7 @@ pub mod kind {
             (IDENT_UPPER_SCOPED, "ident_upper_scoped", true),
             (INSERT, "insert", true),
             (INSERT_OR_UPDATE, "insert_or_update", true),
+            (INTERPOLATION, "interpolation", true),
             (LIT_BOOL, "lit_bool", true),
             (LIT_MAP, "lit_map", true),
             (LIT_NUM, "lit_num", true),
@@ -161,14 +164,15 @@ pub mod kind {
             (SLEEP, "sleep", true),
             (START, "start", true),
             (STRING_QUOTED, "string_quoted", true),
-            // (STRING_QUOTED_BRANCH_0, "string_quoted_branch_0", true),
+            (STRING_QUOTED_BRANCH_0, "string_quoted_branch_0", true),
+            (STRING_QUOTED_BRANCH_1, "string_quoted_branch_1", true),
             (STRING_QUOTED_ESCAPED, "string_quoted_escaped", true),
-            // (STRING_QUOTED_ESCAPED_BRANCH_0, "string_quoted_escaped_branch_0", true),
-            // (STRING_QUOTED_ESCAPED_BRANCH_1, "string_quoted_escaped_branch_1", true),
+            (STRING_QUOTED_ESCAPED_BRANCH_0, "string_quoted_escaped_branch_0", true),
+            (STRING_QUOTED_ESCAPED_BRANCH_1, "string_quoted_escaped_branch_1", true),
             (STRING_RAW, "string_raw", true),
             (STRING_RAW_INTERPOLATED, "string_raw_interpolated", true),
-            // (STRING_RAW_INTERPOLATED_BRANCH_0, "string_raw_interpolated_branch_0", true),
-            // (STRING_RAW_INTERPOLATED_BRANCH_1, "string_raw_interpolated_branch_1", true),
+            (STRING_RAW_INTERPOLATED_BRANCH_0, "string_raw_interpolated_branch_0", true),
+            (STRING_RAW_INTERPOLATED_BRANCH_1, "string_raw_interpolated_branch_1", true),
             (TIMESTAMP, "timestamp", true),
             (TYPE, "type", true),
             (TYPE_ATOM, "type_atom", true),
@@ -272,6 +276,7 @@ pub mod symbol {
             (COMMA, ",", false),
             (COMMERCIAL_AT, "@", false),
             (DOLLAR_SIGN, "$", false),
+            (DOLLAR_SIGN_LEFT_CURLY_BRACKET, "${", false),
             (EQUALS_SIGN, "=", false),
             (EQUALS_SIGN_EQUALS_SIGN, "==", false),
             (EQUALS_SIGN_GREATER_THAN_SIGN, "=>", false),
@@ -413,6 +418,14 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
                 },
                 kind::ECHO => {
                     self.visit_echo(NodeMove::Init)?;
+                    break;
+                },
+                kind::ESCAPE_SEQUENCE => {
+                    self.visit_escape_sequence(NodeMove::Init)?;
+                    break;
+                },
+                kind::ESCAPE_SEQUENCE_INTERPOLATED => {
+                    self.visit_escape_sequence_interpolated(NodeMove::Init)?;
                     break;
                 },
                 kind::EXIT => {
@@ -875,6 +888,38 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
                     self.visit_start(NodeMove::Init)?;
                     break;
                 },
+                kind::STRING_QUOTED => {
+                    self.visit_string_quoted(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_QUOTED_BRANCH_0 => {
+                    self.visit_string_quoted_branch_0(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_QUOTED_BRANCH_1 => {
+                    self.visit_string_quoted_branch_1(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_QUOTED_ESCAPED => {
+                    self.visit_string_quoted_escaped(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_QUOTED_ESCAPED_BRANCH_0 => {
+                    self.visit_string_quoted_escaped_branch_0(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_QUOTED_ESCAPED_BRANCH_1 => {
+                    self.visit_string_quoted_escaped_branch_1(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_RAW => {
+                    self.visit_string_raw(NodeMove::Init)?;
+                    break;
+                },
+                kind::STRING_RAW_INTERPOLATED => {
+                    self.visit_string_raw_interpolated(NodeMove::Init)?;
+                    break;
+                },
                 kind::TIMESTAMP => {
                     self.visit_timestamp(NodeMove::Init)?;
                     break;
@@ -1086,6 +1131,14 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
 
     fn visit_echo(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
         visit::echo(self, node_move)
+    }
+
+    fn visit_escape_sequence(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        visit::escape_sequence(self, node_move)
+    }
+
+    fn visit_escape_sequence_interpolated(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        visit::escape_sequence_interpolated(self, node_move)
     }
 
     fn visit_exit(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
@@ -1344,6 +1397,10 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
         visit::insert_or_update(self, node_move)
     }
 
+    fn visit_interpolation(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        visit::interpolation(self, node_move)
+    }
+
     fn visit_lit_bool(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
         visit::lit_bool(self, node_move)
     }
@@ -1549,40 +1606,54 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
     }
 
     fn visit_string_quoted(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted");
         visit::string_quoted(self, node_move)
     }
 
-    // fn visit_string_quoted_branch_0(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-    //     visit::string_quoted_branch_0(self, node_move)
-    // }
+    fn visit_string_quoted_branch_0(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted_branch_0");
+        visit::string_quoted_branch_0(self, node_move)
+    }
+
+    fn visit_string_quoted_branch_1(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted_branch_0");
+        visit::string_quoted_branch_1(self, node_move)
+    }
 
     fn visit_string_quoted_escaped(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted_escaped");
         visit::string_quoted_escaped(self, node_move)
     }
 
-    // fn visit_string_quoted_escaped_branch_0(&mut self, node_move: NodeMove) -> Result<(),
-    // SyntaxError<()>> {     todo!()
-    // }
+    fn visit_string_quoted_escaped_branch_0(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted_escaped_branch_0");
+        visit::string_quoted_escaped_branch_0(self, node_move)
+    }
 
-    // fn visit_string_quoted_escaped_branch_1(&mut self, node_move: NodeMove) -> Result<(),
-    // SyntaxError<()>> {     todo!()
-    // }
+    fn visit_string_quoted_escaped_branch_1(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_quoted_escaped_branch_1");
+        visit::string_quoted_escaped_branch_1(self, node_move)
+    }
 
     fn visit_string_raw(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_raw");
         visit::string_raw(self, node_move)
     }
 
     fn visit_string_raw_interpolated(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_raw_interpolated");
         visit::string_raw_interpolated(self, node_move)
     }
 
-    // fn visit_string_raw_interpolated_branch_0(&mut self, node_move: NodeMove) -> Result<(),
-    // SyntaxError<()>> {     todo!()
-    // }
+    fn visit_string_raw_interpolated_branch_0(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_raw_interpolated_branch_0");
+        visit::string_raw_interpolated_branch_0(self, node_move)
+    }
 
-    // fn visit_string_raw_interpolated_branch_1(&mut self, node_move: NodeMove) -> Result<(),
-    // SyntaxError<()>> {     todo!()
-    // }
+    fn visit_string_raw_interpolated_branch_1(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::string_raw_interpolated_branch_1");
+        visit::string_raw_interpolated_branch_1(self, node_move)
+    }
 
     fn visit_timestamp(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
         visit::timestamp(self, node_move)
@@ -2002,6 +2073,29 @@ pub mod visit {
             Vis::visit_misc_pat0,
             utils::token(symbol::SEMICOLON),
         ))(visitor, NodeMove::Step)
+    }
+
+    pub fn escape_sequence<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::ESCAPE_SEQUENCE, node_move, GotoNext::StepInto)?;
+        Ok(())
+    }
+
+    pub fn escape_sequence_interpolated<'tree, Vis>(
+        visitor: &mut Vis,
+        node_move: NodeMove,
+    ) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::ESCAPE_SEQUENCE_INTERPOLATED, node_move, GotoNext::StepInto)?;
+        Ok(())
     }
 
     pub fn exit<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
@@ -2797,6 +2891,20 @@ pub mod visit {
         utils::seq((utils::token(keyword::INSERT_OR_UPDATE), Vis::visit_atom))(visitor, NodeMove::Step)
     }
 
+    pub fn interpolation<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::INTERPOLATION, node_move, GotoNext::StepInto)?;
+        utils::seq((
+            utils::token(symbol::DOLLAR_SIGN_LEFT_CURLY_BRACKET),
+            Vis::visit_exp,
+            utils::token(symbol::RIGHT_CURLY_BRACKET),
+        ))(visitor, NodeMove::Step)
+    }
+
     pub fn lit_bool<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
         Vis: Visitor<'tree> + ?Sized,
@@ -3397,23 +3505,46 @@ pub mod visit {
         utils::seq((utils::token(keyword::START), utils::token(symbol::SEMICOLON)))(visitor, NodeMove::Step)
     }
 
-    // NOTE: might have to descend into subnodes
     pub fn string_quoted<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
         Vis: Visitor<'tree> + ?Sized,
     {
         visitor
             .walker()
-            .step(kind::STRING_QUOTED, node_move, GotoNext::StepOver)?;
+            .step(kind::STRING_QUOTED, node_move, GotoNext::StepInto)?;
+        utils::seq((
+            utils::repeat(utils::choice((
+                (kind::STRING_QUOTED_BRANCH_0, Vis::visit_string_quoted_branch_0),
+                (kind::STRING_QUOTED_BRANCH_1, Vis::visit_string_quoted_branch_1),
+                (kind::INTERPOLATION, Vis::visit_interpolation),
+                (
+                    kind::ESCAPE_SEQUENCE_INTERPOLATED,
+                    Vis::visit_escape_sequence_interpolated,
+                ),
+            ))),
+            utils::token(symbol::QUOTATION_MARK),
+        ))(visitor, NodeMove::Step)
+    }
+
+    pub fn string_quoted_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_QUOTED_BRANCH_0, node_move, GotoNext::StepInto)?;
         Ok(())
     }
 
-    // pub fn string_quoted_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(),
-    // SyntaxError<()>> where
-    //     Vis: Visitor<'tree> + ?Sized,
-    // {
-    //     todo!()
-    // }
+    pub fn string_quoted_branch_1<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_QUOTED_BRANCH_1, node_move, GotoNext::StepInto)?;
+        Ok(())
+    }
 
     // NOTE: might have to descend into subnodes
     pub fn string_quoted_escaped<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
@@ -3423,24 +3554,46 @@ pub mod visit {
         visitor
             .walker()
             .step(kind::STRING_QUOTED_ESCAPED, node_move, GotoNext::StepOver)?;
+        utils::seq((
+            utils::repeat(utils::choice((
+                (kind::STRING_QUOTED_BRANCH_0, Vis::visit_string_quoted_branch_0),
+                (kind::STRING_QUOTED_BRANCH_1, Vis::visit_string_quoted_branch_1),
+                (kind::INTERPOLATION, Vis::visit_interpolation),
+                (
+                    kind::ESCAPE_SEQUENCE_INTERPOLATED,
+                    Vis::visit_escape_sequence_interpolated,
+                ),
+            ))),
+            utils::token(symbol::QUOTATION_MARK),
+        ))(visitor, NodeMove::Step)
+    }
+
+    pub fn string_quoted_escaped_branch_0<'tree, Vis>(
+        visitor: &mut Vis,
+        node_move: NodeMove,
+    ) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_QUOTED_ESCAPED_BRANCH_0, node_move, GotoNext::StepInto)?;
         Ok(())
     }
 
-    // pub fn string_quoted_escaped_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) ->
-    // Result<(), SyntaxError<()>> where
-    //     Vis: Visitor<'tree> + ?Sized,
-    // {
-    //     todo!()
-    // }
+    pub fn string_quoted_escaped_branch_1<'tree, Vis>(
+        visitor: &mut Vis,
+        node_move: NodeMove,
+    ) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_QUOTED_ESCAPED_BRANCH_1, node_move, GotoNext::StepInto)?;
+        Ok(())
+    }
 
-    // pub fn string_quoted_escaped_branch_1<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) ->
-    // Result<(), SyntaxError<()>> where
-    //     Vis: Visitor<'tree> + ?Sized,
-    // {
-    //     todo!()
-    // }
-
-    // NOTE: might have to descend into subnodes
     pub fn string_raw<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
         Vis: Visitor<'tree> + ?Sized,
@@ -3449,7 +3602,6 @@ pub mod visit {
         Ok(())
     }
 
-    // NOTE: might have to descend into subnodes
     pub fn string_raw_interpolated<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
         Vis: Visitor<'tree> + ?Sized,
@@ -3460,19 +3612,31 @@ pub mod visit {
         Ok(())
     }
 
-    // pub fn string_raw_interpolated_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) ->
-    // Result<(), SyntaxError<()>> where
-    //     Vis: Visitor<'tree> + ?Sized,
-    // {
-    //     todo!()
-    // }
+    pub fn string_raw_interpolated_branch_0<'tree, Vis>(
+        visitor: &mut Vis,
+        node_move: NodeMove,
+    ) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_RAW_INTERPOLATED_BRANCH_0, node_move, GotoNext::StepInto)?;
+        Ok(())
+    }
 
-    // pub fn string_raw_interpolated_branch_1<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) ->
-    // Result<(), SyntaxError<()>> where
-    //     Vis: Visitor<'tree> + ?Sized,
-    // {
-    //     todo!()
-    // }
+    pub fn string_raw_interpolated_branch_1<'tree, Vis>(
+        visitor: &mut Vis,
+        node_move: NodeMove,
+    ) -> Result<(), SyntaxError<()>>
+    where
+        Vis: Visitor<'tree> + ?Sized,
+    {
+        visitor
+            .walker()
+            .step(kind::STRING_RAW_INTERPOLATED_BRANCH_1, node_move, GotoNext::StepInto)?;
+        Ok(())
+    }
 
     pub fn timestamp<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
