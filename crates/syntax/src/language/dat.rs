@@ -302,7 +302,7 @@ pub mod symbol {
             (LIT_S_DEC, "'sd", false),
             (LIT_S_HEX, "'sh", false),
             (LIT_S_OCT, "'so", false),
-            // (LOW_LINE, "_", false),
+            (LOW_LINE, "_", false),
             (NUMBER_SIGN, "#", false),
             (NUMBER_SIGN_LEFT_SQUARE_BRACKET, "#[", false),
             (PERCENT_SIGN, "%", false),
@@ -2791,8 +2791,7 @@ pub mod visit {
         Vis: Visitor<'tree> + ?Sized,
     {
         visitor.walker().step(kind::EXP_WILD, node_move, GotoNext::StepInto)?;
-        // token::LOW_LINE(visitor, NodeMove::Step)
-        Ok(())
+        utils::token(symbol::LOW_LINE)(visitor, NodeMove::Step)
     }
 
     pub fn field<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
@@ -3387,8 +3386,7 @@ pub mod visit {
         Vis: Visitor<'tree> + ?Sized,
     {
         visitor.walker().step(kind::PAT_WILD, node_move, GotoNext::StepInto)?;
-        // token::LOW_LINE(visitor, NodeMove::Step)
-        Ok(())
+        utils::token(symbol::LOW_LINE)(visitor, NodeMove::Step)
     }
 
     pub fn profile<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
