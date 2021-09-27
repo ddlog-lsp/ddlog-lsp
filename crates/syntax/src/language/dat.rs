@@ -318,6 +318,7 @@ pub mod symbol {
             (SOLIDUS, "/", false),
             (TILDE, "~", false),
             (VERTICAL_LINE, "|", false),
+            (VERTICAL_LINE_RIGHT_SQUARE_BRACKET, "|]", false),
         ]
     }
 }
@@ -3542,14 +3543,13 @@ pub mod visit {
         Ok(())
     }
 
-    // NOTE: might have to descend into subnodes
     pub fn string_quoted_escaped<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
     where
         Vis: Visitor<'tree> + ?Sized,
     {
         visitor
             .walker()
-            .step(kind::STRING_QUOTED_ESCAPED, node_move, GotoNext::StepOver)?;
+            .step(kind::STRING_QUOTED_ESCAPED, node_move, GotoNext::StepInto)?;
         utils::seq((
             utils::repeat(utils::choice((
                 (kind::STRING_QUOTED_BRANCH_0, Vis::visit_string_quoted_branch_0),
@@ -3594,7 +3594,7 @@ pub mod visit {
     where
         Vis: Visitor<'tree> + ?Sized,
     {
-        visitor.walker().step(kind::STRING_RAW, node_move, GotoNext::StepOver)?;
+        visitor.walker().step(kind::STRING_RAW, node_move, GotoNext::StepInto)?;
         Ok(())
     }
 
@@ -3604,8 +3604,21 @@ pub mod visit {
     {
         visitor
             .walker()
-            .step(kind::STRING_RAW_INTERPOLATED, node_move, GotoNext::StepOver)?;
-        Ok(())
+            .step(kind::STRING_RAW_INTERPOLATED, node_move, GotoNext::StepInto)?;
+        utils::seq((
+            utils::repeat(utils::choice((
+                (
+                    kind::STRING_RAW_INTERPOLATED_BRANCH_0,
+                    Vis::visit_string_raw_interpolated_branch_0,
+                ),
+                (
+                    kind::STRING_RAW_INTERPOLATED_BRANCH_1,
+                    Vis::visit_string_raw_interpolated_branch_1,
+                ),
+                (kind::INTERPOLATION, Vis::visit_interpolation),
+            ))),
+            utils::token(symbol::VERTICAL_LINE_RIGHT_SQUARE_BRACKET),
+        ))(visitor, NodeMove::Step)
     }
 
     pub fn string_raw_interpolated_branch_0<'tree, Vis>(
