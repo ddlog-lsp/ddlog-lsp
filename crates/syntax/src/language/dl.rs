@@ -2709,7 +2709,6 @@ pub mod visit {
         Vis: Visitor<'tree> + ?Sized,
     {
         visitor.walker().step(kind::EXP_LAMBDA, node_move, GotoNext::StepInto)?;
-        log::info!("exp_lambda success");
         utils::choice((
             (kind::EXP_LAMBDA_BRANCH_0, Vis::visit_exp_lambda_branch_0),
             (kind::EXP_LAMBDA_BRANCH_1, Vis::visit_exp_lambda_branch_1),
@@ -2723,7 +2722,6 @@ pub mod visit {
         visitor
             .walker()
             .step(kind::EXP_LAMBDA_BRANCH_0, node_move, GotoNext::StepInto)?;
-        log::info!("exp_lambda_branch_0 success");
         utils::seq((
             utils::token(keyword::FUNCTION),
             utils::token(symbol::LEFT_PARENTHESIS),
@@ -2744,7 +2742,6 @@ pub mod visit {
         visitor
             .walker()
             .step(kind::EXP_LAMBDA_BRANCH_1, node_move, GotoNext::StepInto)?;
-        log::info!("exp_lambda_branch_1 success");
         utils::seq((
             utils::token(symbol::VERTICAL_LINE),
             utils::optional(utils::seq((
