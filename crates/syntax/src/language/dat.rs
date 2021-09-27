@@ -1813,7 +1813,6 @@ pub mod visit {
                 utils::optional(utils::token(keyword::MUT)),
                 Vis::visit_type_atom,
             ))),
-            Vis::visit_type_atom,
         ))(visitor, NodeMove::Step)
     }
 
