@@ -2612,7 +2612,7 @@ pub mod visit {
     where
         Vis: Visitor<'tree> + ?Sized,
     {
-        visitor.walker().step(kind::EXP_DIV, node_move, GotoNext::StepInto)?;
+        visitor.walker().step(kind::EXP_EQ, node_move, GotoNext::StepInto)?;
         utils::seq((
             Vis::visit_exp,
             utils::token(symbol::EQUALS_SIGN_EQUALS_SIGN),
