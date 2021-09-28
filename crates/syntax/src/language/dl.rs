@@ -3965,12 +3965,10 @@ pub mod visit {
             .step(kind::STATEMENT_BLOCK, node_move, GotoNext::StepInto)?;
         utils::seq((
             utils::token(symbol::LEFT_CURLY_BRACKET),
-            utils::repeat(utils::seq((
+            utils::optional(utils::seq((
                 Vis::visit_statement,
-                utils::optional(utils::seq((
-                    utils::token(symbol::SEMICOLON),
-                    utils::optional(Vis::visit_statement),
-                ))),
+                utils::repeat(utils::seq((utils::token(symbol::SEMICOLON), Vis::visit_statement))),
+                utils::optional(utils::token(symbol::SEMICOLON)),
             ))),
             utils::token(symbol::RIGHT_CURLY_BRACKET),
         ))(visitor, NodeMove::Step)
