@@ -22,9 +22,9 @@ impl Document {
         let result = {
             let content = content.clone();
             let byte_idx = 0;
-            let callback = content.chunk_walker(byte_idx).callback_adapter_for_tree_sitter();
+            let text = content.chunks().collect::<String>();
             let old_tree = None;
-            parser.parse_with(callback, old_tree)?
+            parser.parse(text, old_tree)?
         };
         Ok(result.map(|tree| core::Document {
             language,
@@ -44,13 +44,7 @@ impl Document {
             let parser = session.get_mut_parser(uri).await?;
             let mut parser = parser.lock().await;
 
-            let callback = {
-                let byte_idx = 0;
-                content
-                    .clone()
-                    .chunk_walker(byte_idx)
-                    .callback_adapter_for_tree_sitter()
-            };
+            let text = content.chunks().collect::<String>();
 
             let old_tree = session.get_mut_tree(uri).await?;
             let mut old_tree = old_tree.lock().await;
@@ -59,7 +53,7 @@ impl Document {
                 old_tree.edit(&edit.input_edit);
             }
 
-            parser.parse_with(callback, Some(&*old_tree))?
+            parser.parse(text, Some(&*old_tree))?
         };
 
         if let Some(tree) = result {
