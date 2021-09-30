@@ -320,6 +320,7 @@ pub mod symbol {
             (PLUS_SIGN_PLUS_SIGN, "++", false),
             (QUESTION_MARK, "?", false),
             (QUOTATION_MARK, "\"", false),
+            (REVERSE_SOLIDUS_QUOTATION_MARK, "\\\"", false),
             (REVERSE_SOLIDUS_REVERSE_SOLIDUS, "\\\\", false),
             (RIGHT_CURLY_BRACKET, "}", false),
             (RIGHT_PARENTHESIS, ")", false),
@@ -4109,15 +4110,15 @@ pub mod visit {
             .step(kind::STRING_QUOTED_ESCAPED, node_move, GotoNext::StepInto)?;
         utils::seq((
             utils::repeat(utils::choice((
-                (kind::STRING_QUOTED_BRANCH_0, Vis::visit_string_quoted_branch_0),
-                (kind::STRING_QUOTED_BRANCH_1, Vis::visit_string_quoted_branch_1),
+                (kind::STRING_QUOTED_ESCAPED_BRANCH_0, Vis::visit_string_quoted_escaped_branch_0),
+                (kind::STRING_QUOTED_ESCAPED_BRANCH_1, Vis::visit_string_quoted_escaped_branch_1),
                 (kind::INTERPOLATION, Vis::visit_interpolation),
                 (
                     kind::ESCAPE_SEQUENCE_INTERPOLATED,
                     Vis::visit_escape_sequence_interpolated,
                 ),
             ))),
-            utils::token(symbol::QUOTATION_MARK),
+            utils::token(symbol::REVERSE_SOLIDUS_QUOTATION_MARK),
         ))(visitor, NodeMove::Step)
     }
 
