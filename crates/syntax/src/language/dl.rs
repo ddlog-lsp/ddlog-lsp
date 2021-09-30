@@ -320,7 +320,7 @@ pub mod symbol {
             (PLUS_SIGN_PLUS_SIGN, "++", false),
             (QUESTION_MARK, "?", false),
             (QUOTATION_MARK, "\"", false),
-            (REVERSE_SOLIDUS_REVERSE_SOLIDUS, "\\", false),
+            (REVERSE_SOLIDUS_REVERSE_SOLIDUS, "\\\\", false),
             (RIGHT_CURLY_BRACKET, "}", false),
             (RIGHT_PARENTHESIS, ")", false),
             (RIGHT_SQUARE_BRACKET, "]", false),
