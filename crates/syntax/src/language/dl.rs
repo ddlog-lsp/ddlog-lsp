@@ -3115,7 +3115,7 @@ pub mod visit {
             .step(kind::FUNCTION_NORMAL_BRANCH_1, node_move, GotoNext::StepInto)?;
         utils::seq((
             utils::token(symbol::LEFT_CURLY_BRACKET),
-            Vis::visit_exp,
+            utils::optional(Vis::visit_exp),
             utils::token(symbol::RIGHT_CURLY_BRACKET),
         ))(visitor, NodeMove::Step)
     }
@@ -4110,8 +4110,14 @@ pub mod visit {
             .step(kind::STRING_QUOTED_ESCAPED, node_move, GotoNext::StepInto)?;
         utils::seq((
             utils::repeat(utils::choice((
-                (kind::STRING_QUOTED_ESCAPED_BRANCH_0, Vis::visit_string_quoted_escaped_branch_0),
-                (kind::STRING_QUOTED_ESCAPED_BRANCH_1, Vis::visit_string_quoted_escaped_branch_1),
+                (
+                    kind::STRING_QUOTED_ESCAPED_BRANCH_0,
+                    Vis::visit_string_quoted_escaped_branch_0,
+                ),
+                (
+                    kind::STRING_QUOTED_ESCAPED_BRANCH_1,
+                    Vis::visit_string_quoted_escaped_branch_1,
+                ),
                 (kind::INTERPOLATION, Vis::visit_interpolation),
                 (
                     kind::ESCAPE_SEQUENCE_INTERPOLATED,
