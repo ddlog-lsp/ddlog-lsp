@@ -165,7 +165,7 @@ pub fn impl_choice(input: TokenStream) -> TokenStream {
     let type_generics = type_inputs_idents.clone();
     let type_inputs_where = crate::visitor::utils::parsers_where(type_inputs_idents);
 
-    let alt_inner = {
+    let choice_body = {
         let cases = (0 .. depth).map(|n| {
             let i = syn::Index::from(n);
             quote! {
@@ -199,7 +199,7 @@ pub fn impl_choice(input: TokenStream) -> TokenStream {
             #(#type_inputs_where),*
         {
             fn choice(&self, visitor: &mut Vis, m: NodeMove) -> Result<(), SyntaxError<()>> {
-                #alt_inner
+                #choice_body
             }
         }
     };
