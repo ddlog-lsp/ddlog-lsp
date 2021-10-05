@@ -211,7 +211,7 @@ impl<'tree> NodeWalker<'tree> {
             let language = self.language();
             let range = self.node().range();
             let data = ();
-            let error = SyntaxError::node_missing_error(language, range, data);
+            let error = SyntaxError::node_missing_error(language, range, want_kind, data);
             self.reset(prev_node);
             return Err(error);
         }

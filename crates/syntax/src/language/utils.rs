@@ -108,7 +108,7 @@ where
 {
     move |visitor, node_move| {
         loop {
-            // log::info!("repeat");
+            // log::info!("repeat::loop");
             let prev = visitor.walker().node();
             if visitor.walker().done {
                 break;
@@ -118,6 +118,7 @@ where
                     continue;
                 },
                 Err(_) => {
+                    // log::info!("repeat::break");
                     visitor.walker().reset(prev);
                     break;
                 },

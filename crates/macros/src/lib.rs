@@ -169,21 +169,39 @@ pub fn impl_choice(input: TokenStream) -> TokenStream {
         let cases = (0 .. depth).map(|n| {
             let i = syn::Index::from(n);
             quote! {
-                match restore(&self.#i.1)(visitor, m) {
-                    Ok(result) => {
-                        // log::info!("matched: {}", #n);
-                        return Ok(());
-                    }
-                    Err(error) => {
-                        // log::info!("error: {:#?}", error);
-                        choices.push((self.#i.0, error));
-                    }
+                // let language: tree_sitter::Language = visitor.walker().language().into();
+                // let have_name = language.node_kind_for_id(self.#i.0).unwrap();
+                // let want_name = language.node_kind_for_id(kind).unwrap();
+                // log::info!("i: {}; have: {}; want: {}", #i, have_name, want_name);
+                if self.#i.0 == kind {
+                    let result = (self.#i.1)(visitor, m);
+                    // if result.is_err() {
+                    //     log::info!("result error: {:#?}", result);
+                    // }
+                    return result;
                 }
             }
         });
+
         quote! {
+            let kind = {
+                let prev = visitor.walker().node();
+                if !visitor.walker().goto_next(crate::node::GotoNext::StepInto, true) {
+                    let language = visitor.walker().language();
+                    let range = visitor.walker().node().range();
+                    let data = ();
+                    let error = SyntaxError::walker_move_error(language, range, data);
+                    return Err(error);
+                }
+                let kind = visitor.walker().node().kind_id();
+                visitor.walker().reset(prev);
+                kind
+            };
+
             let mut choices = vec![];
+
             #(#cases)*
+
             let language = visitor.walker().language();
             let range = visitor.walker().node().range();
             let data = ();
