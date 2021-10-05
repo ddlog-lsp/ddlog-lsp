@@ -38,7 +38,7 @@ impl<'tree> NodeWalker<'tree> {
     pub fn goto_first_child(&mut self) -> bool {
         let mut moved = false;
 
-        if let Some(node) = self.node.first_child() {
+        if let Some(node) = self.node().first_child() {
             self.node = node;
             moved = true;
         }
@@ -50,7 +50,7 @@ impl<'tree> NodeWalker<'tree> {
     pub fn goto_next_sibling(&mut self) -> bool {
         let mut moved = false;
 
-        if let Some(node) = self.node.next_sibling() {
+        if let Some(node) = self.node().next_sibling() {
             self.node = node;
             moved = true;
         }
@@ -88,7 +88,7 @@ impl<'tree> NodeWalker<'tree> {
         let mut moved;
 
         // Only descend if the current node has an error in the subtree.
-        if self.node.has_error() {
+        if self.node().has_error() {
             moved = self.goto_next(mode, skip_extras);
         } else {
             // Otherwise try to move to the next sibling node.
@@ -129,7 +129,7 @@ impl<'tree> NodeWalker<'tree> {
     pub fn goto_parent(&mut self) -> bool {
         let mut moved = false;
 
-        if let Some(node) = self.node.parent() {
+        if let Some(node) = self.node().parent() {
             self.node = node;
             moved = true;
         }
@@ -146,7 +146,7 @@ impl<'tree> NodeWalker<'tree> {
         };
         let mut moved = false;
         loop {
-            if !extras.contains(&self.node.kind_id()) {
+            if !extras.contains(&self.node().kind_id()) {
                 break;
             }
             moved = self.goto_next(GotoNext::StepOver, false);
@@ -156,7 +156,7 @@ impl<'tree> NodeWalker<'tree> {
 
     /// Return the current node's kind id.
     pub fn kind(&self) -> u16 {
-        self.node.kind_id()
+        self.node().kind_id()
     }
 
     #[allow(missing_docs)]
@@ -195,8 +195,8 @@ impl<'tree> NodeWalker<'tree> {
 
         // If a move was attempted and failed, return an error.
         if !node_move {
-            let language = self.language;
-            let range = self.node.range();
+            let language = self.language();
+            let range = self.node().range();
             let data = ();
             let error = SyntaxError::walker_move_error(language, range, data);
             return Err(error);
@@ -208,8 +208,8 @@ impl<'tree> NodeWalker<'tree> {
 
         // If the destination node is a tree-sitter MISSING node, return an error.
         if dest_node.is_missing() {
-            let language = self.language;
-            let range = self.node.range();
+            let language = self.language();
+            let range = self.node().range();
             let data = ();
             let error = SyntaxError::node_missing_error(language, range, data);
             self.reset(prev_node);
@@ -218,8 +218,8 @@ impl<'tree> NodeWalker<'tree> {
 
         // If the destination node kind is not the expected node kind, return an error.
         if dest_kind != want_kind {
-            let language = self.language;
-            let range = self.node.range();
+            let language = self.language();
+            let range = self.node().range();
             let data = ();
             let error = SyntaxError::node_mismatch_error(language, range, dest_kind, want_kind, data);
             return Err(error);
