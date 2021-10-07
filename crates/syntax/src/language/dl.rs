@@ -4075,7 +4075,7 @@ pub mod visit {
                 (kind::STRING_QUOTED_BRANCH_0, Vis::visit_string_quoted_branch_0),
                 (kind::STRING_QUOTED_BRANCH_1, Vis::visit_string_quoted_branch_1),
                 (kind::INTERPOLATION, Vis::visit_interpolation),
-                (kind::ESCAPE_SEQUENCE_INTERPOLATED, Vis::visit_escape_sequence),
+                (kind::ESCAPE_SEQUENCE, Vis::visit_escape_sequence),
             ))),
             utils::token(symbol::QUOTATION_MARK),
         ))(visitor, NodeMove::Step)
