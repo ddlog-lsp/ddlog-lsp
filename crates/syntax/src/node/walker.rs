@@ -77,7 +77,7 @@ impl<'tree> NodeWalker<'tree> {
         }
 
         if skip_extras {
-            self.skip_extras();
+            self.skip_nodes();
         }
 
         moved
@@ -138,7 +138,7 @@ impl<'tree> NodeWalker<'tree> {
     }
 
     // FIXME
-    fn skip_extras(&mut self) -> bool {
+    fn skip_nodes(&mut self) -> bool {
         #[rustfmt::skip]
         let extras: &[u16] = match self.language() {
             Language::DDlogDat => &[dat::kind::COMMENT_LINE],
@@ -187,7 +187,7 @@ impl<'tree> NodeWalker<'tree> {
         // attempted, record success or failure.
         let node_move = match node_move {
             NodeMove::Init => {
-                self.skip_extras();
+                self.skip_nodes();
                 true
             },
             NodeMove::Step => self.goto_next(goto_next, true),
