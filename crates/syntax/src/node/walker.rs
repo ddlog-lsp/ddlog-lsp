@@ -140,13 +140,14 @@ impl<'tree> NodeWalker<'tree> {
     // FIXME
     fn skip_nodes(&mut self) -> bool {
         #[rustfmt::skip]
-        let extras: &[u16] = match self.language() {
+        let extras_kinds: &[u16] = match self.language() {
             Language::DDlogDat => &[dat::kind::COMMENT_LINE],
             Language::DDlogDl  => &[ dl::kind::COMMENT_LINE, dl::kind::COMMENT_BLOCK],
         };
         let mut moved = false;
         loop {
-            if !extras.contains(&self.node().kind_id()) {
+            let node = self.node();
+            if !extras_kinds.contains(&node.kind_id()) {
                 break;
             }
             moved = self.goto_next(GotoNext::StepOver, false);
