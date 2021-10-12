@@ -23,6 +23,7 @@ pub struct Session {
     texts: DashMap<lsp::Url, core::Text>,
     pub parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
     pub trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
+    pub workspace_folders: RwLock<Option<Vec<lsp::WorkspaceFolder>>>,
 }
 
 impl Session {
@@ -32,6 +33,7 @@ impl Session {
         let texts = Default::default();
         let parsers = Default::default();
         let trees = Default::default();
+        let workspace_folders = RwLock::new(Default::default());
         Ok(Session {
             server_capabilities,
             client_capabilities,
@@ -39,6 +41,7 @@ impl Session {
             texts,
             parsers,
             trees,
+            workspace_folders,
         })
     }
 

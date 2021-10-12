@@ -37,6 +37,7 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 impl lspower::LanguageServer for Server {
     async fn initialize(&self, params: lsp::InitializeParams) -> jsonrpc::Result<lsp::InitializeResult> {
         *self.session.client_capabilities.write().await = Some(params.capabilities);
+        *self.session.workspace_folders.write().await = params.workspace_folders;
         let capabilities = capabilities();
         Ok(lsp::InitializeResult {
             capabilities,
