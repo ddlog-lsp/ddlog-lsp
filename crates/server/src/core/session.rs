@@ -29,9 +29,9 @@ impl Session {
     pub fn new(client: Option<lspower::Client>) -> anyhow::Result<Self> {
         let server_capabilities = RwLock::new(server::capabilities());
         let client_capabilities = RwLock::new(Default::default());
-        let texts = DashMap::new();
-        let parsers = DashMap::new();
-        let trees = DashMap::new();
+        let texts = Default::default();
+        let parsers = Default::default();
+        let trees = Default::default();
         Ok(Session {
             server_capabilities,
             client_capabilities,
