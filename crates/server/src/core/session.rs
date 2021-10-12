@@ -3,6 +3,7 @@ use dashmap::{
     mapref::one::{Ref, RefMut},
     DashMap,
 };
+use std::convert::TryFrom;
 
 #[cfg(feature = "runtime-agnostic")]
 use async_lock::{Mutex, RwLock};
@@ -61,6 +62,64 @@ impl Session {
         Ok(())
     }
 
+    pub async fn read_documents(&self) -> anyhow::Result<Vec<(lsp::Url, core::Document)>> {
+        fn walk_folder(
+            uri: &lsp::Url,
+            folder_path: &std::path::Path,
+            results: &mut Vec<(lsp::Url, core::Document)>,
+        ) -> anyhow::Result<()> {
+            if !folder_path.is_dir() {
+                return Ok(());
+            }
+
+            for entry in folder_path.read_dir()? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_dir() {
+                    walk_folder(uri, path.as_path(), results)?;
+                } else {
+                    if path.to_string_lossy().ends_with(".fail.dl") {
+                        continue;
+                    }
+                    if let Ok(language) = core::Language::try_from(&*path) {
+                        let uri = lsp::Url::from_file_path(&path).unwrap();
+                        let params = lsp::DidOpenTextDocumentParams {
+                            text_document: {
+                                let language_id = language.id().into();
+                                let version = Default::default();
+                                let text = std::fs::read_to_string(path)?;
+                                let item = lsp::TextDocumentItem {
+                                    uri: uri.clone(),
+                                    language_id,
+                                    version,
+                                    text,
+                                };
+                                item
+                            },
+                        };
+                        if let Some(document) = core::Document::open(params)? {
+                            results.push((uri, document));
+                        } else {
+                            // FIXME: should handle parse errors or just ignore them?
+                        }
+                    }
+                }
+            }
+
+            Ok(())
+        }
+
+        let mut results = vec![];
+        if let Some(workspace_folders) = &*self.workspace_folders.read().await {
+            for folder in workspace_folders {
+                if let Ok(folder_path) = folder.uri.to_file_path() {
+                    walk_folder(&folder.uri, folder_path.as_path(), &mut results)?;
+                }
+            }
+        }
+        Ok(results)
+    }
+
     pub fn remove_document(&self, uri: &lsp::Url) -> anyhow::Result<()> {
         let result = self.texts.remove(uri);
         debug_assert!(result.is_some());
@@ -78,7 +137,7 @@ impl Session {
                 lsp::SemanticTokensServerCapabilities::SemanticTokensOptions(options) => Some(options.legend.clone()),
                 lsp::SemanticTokensServerCapabilities::SemanticTokensRegistrationOptions(options) => {
                     Some(options.semantic_tokens_options.legend.clone())
-                },
+                }
             }
         } else {
             None
