@@ -88,13 +88,12 @@ impl Session {
                                 let language_id = language.id().into();
                                 let version = Default::default();
                                 let text = std::fs::read_to_string(path)?;
-                                let item = lsp::TextDocumentItem {
+                                lsp::TextDocumentItem {
                                     uri: uri.clone(),
                                     language_id,
                                     version,
                                     text,
-                                };
-                                item
+                                }
                             },
                         };
                         if let Some(document) = core::Document::open(params)? {
