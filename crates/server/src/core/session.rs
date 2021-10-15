@@ -23,6 +23,7 @@ pub struct Session {
     pub client_capabilities: RwLock<Option<lsp::ClientCapabilities>>,
     client: Option<lspower::Client>,
     workspace_documents: DashMap<core::WorkspaceFolder, DashSet<lsp::Url>>,
+    pub document_workspaces: DashMap<lsp::Url, core::WorkspaceFolder>,
     document_texts: DashMap<lsp::Url, core::Text>,
     pub document_parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
     pub document_trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
@@ -33,6 +34,7 @@ impl Session {
         let server_capabilities = RwLock::new(server::capabilities());
         let client_capabilities = RwLock::new(Default::default());
         let workspace_documents = DashMap::default();
+        let document_workspaces = DashMap::default();
         let document_texts = DashMap::default();
         let document_parsers = DashMap::default();
         let document_trees = DashMap::default();
@@ -41,6 +43,7 @@ impl Session {
             client_capabilities,
             client,
             workspace_documents,
+            document_workspaces,
             document_texts,
             document_parsers,
             document_trees,
@@ -53,25 +56,46 @@ impl Session {
             .ok_or_else(|| core::Error::ClientNotInitialized.into())
     }
 
-    pub fn insert_document(&self, document: core::Document) -> anyhow::Result<()> {
+    pub fn insert_document(&self, workspace_folder: Option<core::WorkspaceFolder>, document: core::Document) -> anyhow::Result<()> {
+        // create document_workspaces entry
+        if let Some(workspace_folder) = workspace_folder {
+            let result = self.document_workspaces.insert(document.uri.clone(), workspace_folder);
+            debug_assert!(result.is_none());
+        }
+
+        // create document_texts entry
         let result = self.document_texts.insert(document.uri.clone(), document.text());
         debug_assert!(result.is_none());
+
+        // create document_parsers entry
         let result = self
             .document_parsers
             .insert(document.uri.clone(), Mutex::new(document.parser));
         debug_assert!(result.is_none());
+
+        // create document_trees entry
         let result = self.document_trees.insert(document.uri, Mutex::new(document.tree));
         debug_assert!(result.is_none());
+
         Ok(())
     }
 
     pub fn remove_document(&self, uri: &lsp::Url) -> anyhow::Result<()> {
+        // delete document_workspaces entry
+        self.document_workspaces.remove(uri);
+
+        // delete document_texts entry
         let result = self.document_texts.remove(uri);
         debug_assert!(result.is_some());
+
+        // delete document_parsers entry
         let result = self.document_parsers.remove(uri);
         debug_assert!(result.is_some());
+
+        // delete document_trees entry
         let result = self.document_trees.remove(uri);
         debug_assert!(result.is_some());
+
         Ok(())
     }
 
@@ -132,20 +156,21 @@ impl Session {
         })
     }
 
-    pub fn insert_workspace_folders(&self, workspace_folders: Vec<lsp::WorkspaceFolder>) -> anyhow::Result<()> {
-        for folder in workspace_folders {
-            if let Ok(folder_path) = folder.uri.to_file_path() {
-                let mut folder_entries = vec![];
-                walk_folder(folder_path, &mut folder_entries)?;
+    pub fn insert_workspace_folders(&self, workspaces: Vec<lsp::WorkspaceFolder>) -> anyhow::Result<()> {
+        for workspace_folder in workspaces {
+            if let Ok(workspace_folder_path) = workspace_folder.uri.to_file_path() {
+                let mut workspace_folder_entries = vec![];
+                walk_folder(workspace_folder_path, &mut workspace_folder_entries)?;
 
                 let mut workspace_document_uris: DashSet<lsp::Url> = DashSet::new();
-                for document in folder_entries {
+                for document in workspace_folder_entries {
                     workspace_document_uris.insert(document.uri.clone());
-                    self.insert_document(document);
+                    let workspace_folder = Some(core::WorkspaceFolder(workspace_folder.clone()));
+                    self.insert_document(workspace_folder, document);
                 }
 
                 self.workspace_documents
-                    .insert(core::WorkspaceFolder(folder), workspace_document_uris);
+                    .insert(core::WorkspaceFolder(workspace_folder), workspace_document_uris);
             }
         }
         Ok(())

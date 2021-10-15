@@ -33,21 +33,30 @@ pub mod text_document {
     }
 
     pub async fn did_close(session: Arc<core::Session>, params: lsp::DidCloseTextDocumentParams) -> anyhow::Result<()> {
+        if session.document_workspaces.get(&params.text_document.uri).is_some() {
+            return Ok(())
+        }
+
         let uri = params.text_document.uri;
         session.remove_document(&uri)?;
         let diagnostics = Default::default();
         let version = Default::default();
         session.client()?.publish_diagnostics(uri, diagnostics, version).await;
+
         Ok(())
     }
 
     pub async fn did_open(session: Arc<core::Session>, params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<()> {
-        let uri = params.text_document.uri.clone();
+        if session.document_trees.contains_key(&params.text_document.uri) {
+            return Ok(())
+        }
 
+        let workspace_folder = None;
+        let uri = params.text_document.uri.clone();
         if let Some(document) = core::Document::open(params)? {
             let tree = document.tree.clone();
             let text = document.text();
-            session.insert_document(document)?;
+            session.insert_document(workspace_folder, document)?;
             let diagnostics = provider::diagnostics(&tree, &uri, &text);
             let version = Default::default();
             session.client()?.publish_diagnostics(uri, diagnostics, version).await;
