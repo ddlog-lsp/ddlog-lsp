@@ -53,12 +53,14 @@ impl Session {
             .ok_or_else(|| core::Error::ClientNotInitialized.into())
     }
 
-    pub fn insert_document(&self, uri: lsp::Url, document: core::Document) -> anyhow::Result<()> {
-        let result = self.document_texts.insert(uri.clone(), document.text());
+    pub fn insert_document(&self, document: core::Document) -> anyhow::Result<()> {
+        let result = self.document_texts.insert(document.uri.clone(), document.text());
         debug_assert!(result.is_none());
-        let result = self.document_parsers.insert(uri.clone(), Mutex::new(document.parser));
+        let result = self
+            .document_parsers
+            .insert(document.uri.clone(), Mutex::new(document.parser));
         debug_assert!(result.is_none());
-        let result = self.document_trees.insert(uri, Mutex::new(document.tree));
+        let result = self.document_trees.insert(document.uri, Mutex::new(document.tree));
         debug_assert!(result.is_none());
         Ok(())
     }
@@ -137,9 +139,9 @@ impl Session {
                 walk_folder(folder_path, &mut folder_entries)?;
 
                 let mut workspace_document_uris: DashSet<lsp::Url> = DashSet::new();
-                for (uri, document) in folder_entries {
-                    workspace_document_uris.insert(uri.clone());
-                    self.insert_document(uri, document);
+                for document in folder_entries {
+                    workspace_document_uris.insert(document.uri.clone());
+                    self.insert_document(document);
                 }
 
                 self.workspace_folders
@@ -156,10 +158,7 @@ impl Session {
     }
 }
 
-fn walk_folder(
-    current_subfolder: std::path::PathBuf,
-    results: &mut Vec<(lsp::Url, core::Document)>,
-) -> anyhow::Result<()> {
+fn walk_folder(current_subfolder: std::path::PathBuf, results: &mut Vec<core::Document>) -> anyhow::Result<()> {
     if !current_subfolder.is_dir() {
         return Ok(());
     }
@@ -181,7 +180,7 @@ fn walk_folder(
                         let version = Default::default();
                         let text = std::fs::read_to_string(entry_path)?;
                         lsp::TextDocumentItem {
-                            uri: uri.clone(),
+                            uri,
                             language_id,
                             version,
                             text,
@@ -189,7 +188,7 @@ fn walk_folder(
                     },
                 };
                 if let Some(document) = core::Document::open(params)? {
-                    results.push((uri, document));
+                    results.push(document);
                 } else {
                     // FIXME: should handle parse errors or just ignore them?
                 }

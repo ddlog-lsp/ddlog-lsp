@@ -47,7 +47,7 @@ pub mod text_document {
         if let Some(document) = core::Document::open(params)? {
             let tree = document.tree.clone();
             let text = document.text();
-            session.insert_document(uri.clone(), document)?;
+            session.insert_document(document)?;
             let diagnostics = provider::diagnostics(&tree, &uri, &text);
             let version = Default::default();
             session.client()?.publish_diagnostics(uri, diagnostics, version).await;

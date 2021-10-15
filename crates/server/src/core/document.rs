@@ -8,6 +8,7 @@ use async_lock::Mutex;
 use tokio::sync::Mutex;
 
 pub struct Document {
+    pub uri: lsp::Url,
     pub language: core::Language,
     pub content: ropey::Rope,
     pub parser: tree_sitter::Parser,
@@ -16,6 +17,7 @@ pub struct Document {
 
 impl Document {
     pub fn open(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Option<Self>> {
+        let uri = params.text_document.uri;
         let language = core::Language::try_from(params.text_document.language_id.as_str())?;
         let mut parser = tree_sitter::Parser::try_from(language)?;
         let content = ropey::Rope::from(params.text_document.text);
@@ -27,6 +29,7 @@ impl Document {
             parser.parse(text, old_tree)?
         };
         Ok(result.map(|tree| core::Document {
+            uri,
             language,
             content,
             parser,
