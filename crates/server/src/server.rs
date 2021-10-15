@@ -27,9 +27,21 @@ pub fn capabilities() -> lsp::ServerCapabilities {
         Some(lsp::TextDocumentSyncCapability::Options(options))
     };
 
+    let workspace = {
+        let options = lsp::WorkspaceServerCapabilities {
+            workspace_folders: Some(lsp::WorkspaceFoldersServerCapabilities {
+                change_notifications: Some(lsp::OneOf::Left(true)),
+                supported: Some(true),
+            }),
+            ..Default::default()
+        };
+        Some(options)
+    };
+
     lsp::ServerCapabilities {
         text_document_sync,
         document_symbol_provider,
+        workspace,
         ..Default::default()
     }
 }
@@ -74,6 +86,11 @@ impl lspower::LanguageServer for Server {
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
         let session = self.session.clone();
         handler::text_document::did_change(session, params).await.unwrap()
+    }
+
+    async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
+        let session = self.session.clone();
+        handler::workspace::did_change_workspace_folders(session, params).await
     }
 
     async fn did_close(&self, params: lsp::DidCloseTextDocumentParams) {

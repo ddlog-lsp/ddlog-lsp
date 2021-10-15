@@ -65,3 +65,22 @@ pub mod text_document {
         provider::document_symbol(session, params).await
     }
 }
+
+pub mod workspace {
+    use crate::core;
+    use std::sync::Arc;
+
+    pub async fn did_change_workspace_folders(
+        session: Arc<core::Session>,
+        params: lsp::DidChangeWorkspaceFoldersParams,
+    ) {
+        if let Some(workspace_folders) = &mut *session.workspace_folders.write().await {
+            for folder in params.event.removed {
+                workspace_folders.remove_item(&core::WorkspaceFolder(folder));
+            }
+            for folder in params.event.added {
+                workspace_folders.insert(core::WorkspaceFolder(folder));
+            }
+        }
+    }
+}
