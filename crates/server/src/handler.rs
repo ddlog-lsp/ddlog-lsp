@@ -73,14 +73,9 @@ pub mod workspace {
     pub async fn did_change_workspace_folders(
         session: Arc<core::Session>,
         params: lsp::DidChangeWorkspaceFoldersParams,
-    ) {
-        if let Some(workspace_folders) = &mut *session.workspace_folders.write().await {
-            for folder in params.event.removed {
-                workspace_folders.remove_item(&core::WorkspaceFolder(folder));
-            }
-            for folder in params.event.added {
-                workspace_folders.insert(core::WorkspaceFolder(folder));
-            }
-        }
+    ) -> anyhow::Result<()> {
+        session.remove_workspace_folders(params.event.removed);
+        session.insert_workspace_folders(params.event.added)?;
+        Ok(())
     }
 }

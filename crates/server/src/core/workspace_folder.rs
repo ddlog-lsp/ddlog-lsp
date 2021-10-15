@@ -54,3 +54,9 @@ impl std::cmp::PartialOrd for WorkspaceFolder {
         std::cmp::PartialOrd::partial_cmp(this, that)
     }
 }
+
+impl std::hash::Hash for WorkspaceFolder {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.uri.hash(state)
+    }
+}

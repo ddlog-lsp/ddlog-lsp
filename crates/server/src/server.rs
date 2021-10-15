@@ -1,6 +1,5 @@
 use crate::{core, handler};
 use lspower::jsonrpc;
-use sorted_vec::SortedVec;
 use std::sync::Arc;
 
 pub struct Server {
@@ -50,17 +49,11 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 impl lspower::LanguageServer for Server {
     async fn initialize(&self, params: lsp::InitializeParams) -> jsonrpc::Result<lsp::InitializeResult> {
         *self.session.client_capabilities.write().await = Some(params.capabilities);
-        *self.session.workspace_folders.write().await = {
-            let mut sorted = SortedVec::new();
-            if let Some(workspace_folders) = params.workspace_folders {
-                for folder in workspace_folders {
-                    sorted.insert(core::WorkspaceFolder(folder));
-                }
-                Some(sorted)
-            } else {
-                None
-            }
-        };
+        if let Some(workspace_folders) = params.workspace_folders {
+            self.session
+                .insert_workspace_folders(workspace_folders)
+                .map_err(core::IntoJsonRpcError)?;
+        }
         let capabilities = capabilities();
         Ok(lsp::InitializeResult {
             capabilities,
@@ -90,7 +83,8 @@ impl lspower::LanguageServer for Server {
 
     async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
         let session = self.session.clone();
-        handler::workspace::did_change_workspace_folders(session, params).await
+        let result = handler::workspace::did_change_workspace_folders(session, params).await;
+        result.unwrap();
     }
 
     async fn did_close(&self, params: lsp::DidCloseTextDocumentParams) {

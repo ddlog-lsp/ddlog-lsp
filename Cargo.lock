@@ -578,7 +578,6 @@ dependencies = [
  "lspower",
  "ropey",
  "serde_json",
- "sorted-vec",
  "thiserror",
  "tokio",
  "tree-sitter-facade",
@@ -1556,12 +1555,6 @@ dependencies = [
  "libc",
  "winapi",
 ]
-
-[[package]]
-name = "sorted-vec"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c026467316e4ed9196f9ebe09c7801e4541c9052bf9f0d34b6f6c504ffccc233"
 
 [[package]]
 name = "strsim"
