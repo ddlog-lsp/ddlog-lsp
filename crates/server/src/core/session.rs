@@ -24,6 +24,7 @@ pub struct Session {
     client: Option<lspower::Client>,
     workspace_documents: DashMap<core::WorkspaceFolder, DashSet<lsp::Url>>,
     pub document_workspaces: DashMap<lsp::Url, core::WorkspaceFolder>,
+    pub document_states: DashMap<lsp::Url, core::DocumentState>,
     document_texts: DashMap<lsp::Url, core::Text>,
     pub document_parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
     pub document_trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
@@ -35,6 +36,7 @@ impl Session {
         let client_capabilities = RwLock::new(Default::default());
         let workspace_documents = DashMap::default();
         let document_workspaces = DashMap::default();
+        let document_states = DashMap::default();
         let document_texts = DashMap::default();
         let document_parsers = DashMap::default();
         let document_trees = DashMap::default();
@@ -44,6 +46,7 @@ impl Session {
             client,
             workspace_documents,
             document_workspaces,
+            document_states,
             document_texts,
             document_parsers,
             document_trees,
@@ -56,12 +59,22 @@ impl Session {
             .ok_or_else(|| core::Error::ClientNotInitialized.into())
     }
 
-    pub fn insert_document(&self, workspace_folder: Option<core::WorkspaceFolder>, document: core::Document) -> anyhow::Result<()> {
+    pub fn insert_document(
+        &self,
+        workspace_folder: Option<core::WorkspaceFolder>,
+        document: core::Document,
+    ) -> anyhow::Result<()> {
         // create document_workspaces entry
         if let Some(workspace_folder) = workspace_folder {
             let result = self.document_workspaces.insert(document.uri.clone(), workspace_folder);
             debug_assert!(result.is_none());
         }
+
+        // create document_states entry
+        let result = self
+            .document_states
+            .insert(document.uri.clone(), core::DocumentState::Closed);
+        debug_assert!(result.is_none());
 
         // create document_texts entry
         let result = self.document_texts.insert(document.uri.clone(), document.text());
@@ -83,6 +96,10 @@ impl Session {
     pub fn remove_document(&self, uri: &lsp::Url) -> anyhow::Result<()> {
         // delete document_workspaces entry
         self.document_workspaces.remove(uri);
+
+        // delete document_states entry
+        let result = self.document_states.remove(uri);
+        debug_assert!(result.is_some());
 
         // delete document_texts entry
         let result = self.document_texts.remove(uri);

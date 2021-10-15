@@ -34,7 +34,10 @@ pub mod text_document {
 
     pub async fn did_close(session: Arc<core::Session>, params: lsp::DidCloseTextDocumentParams) -> anyhow::Result<()> {
         if session.document_workspaces.get(&params.text_document.uri).is_some() {
-            return Ok(())
+            let uri = params.text_document.uri.clone();
+            let result = session.document_states.insert(uri, core::DocumentState::Closed);
+            debug_assert!(matches!(result, Some(core::DocumentState::Opened)));
+            return Ok(());
         }
 
         let uri = params.text_document.uri;
@@ -48,7 +51,10 @@ pub mod text_document {
 
     pub async fn did_open(session: Arc<core::Session>, params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<()> {
         if session.document_trees.contains_key(&params.text_document.uri) {
-            return Ok(())
+            let uri = params.text_document.uri.clone();
+            let result = session.document_states.insert(uri, core::DocumentState::Opened);
+            debug_assert!(matches!(result, Some(core::DocumentState::Closed)));
+            return Ok(());
         }
 
         let workspace_folder = None;
