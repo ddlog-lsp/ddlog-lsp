@@ -22,7 +22,7 @@ pub struct Session {
     pub server_capabilities: RwLock<lsp::ServerCapabilities>,
     pub client_capabilities: RwLock<Option<lsp::ClientCapabilities>>,
     client: Option<lspower::Client>,
-    workspace_folders: DashMap<core::WorkspaceFolder, DashSet<lsp::Url>>,
+    workspace_documents: DashMap<core::WorkspaceFolder, DashSet<lsp::Url>>,
     document_texts: DashMap<lsp::Url, core::Text>,
     pub document_parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
     pub document_trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
@@ -32,7 +32,7 @@ impl Session {
     pub fn new(client: Option<lspower::Client>) -> anyhow::Result<Self> {
         let server_capabilities = RwLock::new(server::capabilities());
         let client_capabilities = RwLock::new(Default::default());
-        let workspace_folders = DashMap::default();
+        let workspace_documents = DashMap::default();
         let document_texts = DashMap::default();
         let document_parsers = DashMap::default();
         let document_trees = DashMap::default();
@@ -40,7 +40,7 @@ impl Session {
             server_capabilities,
             client_capabilities,
             client,
-            workspace_folders,
+            workspace_documents,
             document_texts,
             document_parsers,
             document_trees,
@@ -144,7 +144,7 @@ impl Session {
                     self.insert_document(document);
                 }
 
-                self.workspace_folders
+                self.workspace_documents
                     .insert(core::WorkspaceFolder(folder), workspace_document_uris);
             }
         }
@@ -153,7 +153,7 @@ impl Session {
 
     pub fn remove_workspace_folders(&self, workspace_folders: Vec<lsp::WorkspaceFolder>) {
         for folder in workspace_folders {
-            self.workspace_folders.remove(&core::WorkspaceFolder(folder));
+            self.workspace_documents.remove(&core::WorkspaceFolder(folder));
         }
     }
 }
