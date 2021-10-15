@@ -646,9 +646,7 @@ mod util {
                     cmd.args(&["-c", commands.as_ref()]);
                 }
                 let status = cmd.status()?;
-                if !status.success() {
-                    panic!("failed to regenerate parser: {}", grammar);
-                }
+                assert!(status.success(), "failed to regenerate parser: {}", grammar);
             }
 
             Ok(())
