@@ -1,5 +1,6 @@
 use crate::{core, handler};
 use lspower::jsonrpc;
+use sorted_vec::SortedVec;
 use std::sync::Arc;
 
 pub struct Server {
@@ -37,7 +38,17 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 impl lspower::LanguageServer for Server {
     async fn initialize(&self, params: lsp::InitializeParams) -> jsonrpc::Result<lsp::InitializeResult> {
         *self.session.client_capabilities.write().await = Some(params.capabilities);
-        *self.session.workspace_folders.write().await = params.workspace_folders;
+        *self.session.workspace_folders.write().await = {
+            let mut sorted = SortedVec::new();
+            if let Some(workspace_folders) = params.workspace_folders {
+                for folder in workspace_folders {
+                    sorted.insert(core::WorkspaceFolder(folder));
+                }
+                Some(sorted)
+            } else {
+                None
+            }
+        };
         let capabilities = capabilities();
         Ok(lsp::InitializeResult {
             capabilities,

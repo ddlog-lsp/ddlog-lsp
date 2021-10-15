@@ -3,6 +3,7 @@ use dashmap::{
     mapref::one::{Ref, RefMut},
     DashMap,
 };
+use sorted_vec::SortedVec;
 use std::convert::TryFrom;
 
 #[cfg(feature = "runtime-agnostic")]
@@ -24,7 +25,7 @@ pub struct Session {
     texts: DashMap<lsp::Url, core::Text>,
     pub parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
     pub trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
-    pub workspace_folders: RwLock<Option<Vec<lsp::WorkspaceFolder>>>,
+    pub workspace_folders: RwLock<Option<SortedVec<core::WorkspaceFolder>>>,
 }
 
 impl Session {
@@ -110,9 +111,9 @@ impl Session {
 
         let mut results = vec![];
         if let Some(workspace_folders) = &*self.workspace_folders.read().await {
-            for folder in workspace_folders {
-                if let Ok(folder_path) = folder.uri.to_file_path() {
-                    walk_folder(&folder.uri, folder_path.as_path(), &mut results)?;
+            for folder in workspace_folders.to_vec() {
+                if let Ok(folder_path) = folder.uri().to_file_path() {
+                    walk_folder(folder.uri(), folder_path.as_path(), &mut results)?;
                 }
             }
         }
@@ -136,7 +137,7 @@ impl Session {
                 lsp::SemanticTokensServerCapabilities::SemanticTokensOptions(options) => Some(options.legend.clone()),
                 lsp::SemanticTokensServerCapabilities::SemanticTokensRegistrationOptions(options) => {
                     Some(options.semantic_tokens_options.legend.clone())
-                }
+                },
             }
         } else {
             None
