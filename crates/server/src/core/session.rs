@@ -22,28 +22,28 @@ pub struct Session {
     pub server_capabilities: RwLock<lsp::ServerCapabilities>,
     pub client_capabilities: RwLock<Option<lsp::ClientCapabilities>>,
     client: Option<lspower::Client>,
-    texts: DashMap<lsp::Url, core::Text>,
-    pub parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
-    pub trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
     workspace_folders: DashMap<core::WorkspaceFolder, DashSet<lsp::Url>>,
+    document_texts: DashMap<lsp::Url, core::Text>,
+    pub document_parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
+    pub document_trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
 }
 
 impl Session {
     pub fn new(client: Option<lspower::Client>) -> anyhow::Result<Self> {
         let server_capabilities = RwLock::new(server::capabilities());
         let client_capabilities = RwLock::new(Default::default());
-        let texts = DashMap::default();
-        let parsers = DashMap::default();
-        let trees = DashMap::default();
         let workspace_folders = DashMap::default();
+        let document_texts = DashMap::default();
+        let document_parsers = DashMap::default();
+        let document_trees = DashMap::default();
         Ok(Session {
             server_capabilities,
             client_capabilities,
             client,
-            texts,
-            parsers,
-            trees,
             workspace_folders,
+            document_texts,
+            document_parsers,
+            document_trees,
         })
     }
 
@@ -54,21 +54,21 @@ impl Session {
     }
 
     pub fn insert_document(&self, uri: lsp::Url, document: core::Document) -> anyhow::Result<()> {
-        let result = self.texts.insert(uri.clone(), document.text());
+        let result = self.document_texts.insert(uri.clone(), document.text());
         debug_assert!(result.is_none());
-        let result = self.parsers.insert(uri.clone(), Mutex::new(document.parser));
+        let result = self.document_parsers.insert(uri.clone(), Mutex::new(document.parser));
         debug_assert!(result.is_none());
-        let result = self.trees.insert(uri, Mutex::new(document.tree));
+        let result = self.document_trees.insert(uri, Mutex::new(document.tree));
         debug_assert!(result.is_none());
         Ok(())
     }
 
     pub fn remove_document(&self, uri: &lsp::Url) -> anyhow::Result<()> {
-        let result = self.texts.remove(uri);
+        let result = self.document_texts.remove(uri);
         debug_assert!(result.is_some());
-        let result = self.parsers.remove(uri);
+        let result = self.document_parsers.remove(uri);
         debug_assert!(result.is_some());
-        let result = self.trees.remove(uri);
+        let result = self.document_trees.remove(uri);
         debug_assert!(result.is_some());
         Ok(())
     }
@@ -88,7 +88,7 @@ impl Session {
     }
 
     pub async fn get_text(&self, uri: &lsp::Url) -> anyhow::Result<Ref<'_, lsp::Url, core::Text>> {
-        self.texts.get(uri).ok_or_else(|| {
+        self.document_texts.get(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Document;
             let uri = uri.clone();
             core::Error::SessionResourceNotFound { kind, uri }.into()
@@ -96,7 +96,7 @@ impl Session {
     }
 
     pub async fn get_mut_text(&self, uri: &lsp::Url) -> anyhow::Result<RefMut<'_, lsp::Url, core::Text>> {
-        self.texts.get_mut(uri).ok_or_else(|| {
+        self.document_texts.get_mut(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Document;
             let uri = uri.clone();
             core::Error::SessionResourceNotFound { kind, uri }.into()
@@ -107,7 +107,7 @@ impl Session {
         &self,
         uri: &lsp::Url,
     ) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Parser>>> {
-        self.parsers.get_mut(uri).ok_or_else(|| {
+        self.document_parsers.get_mut(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Parser;
             let uri = uri.clone();
             core::Error::SessionResourceNotFound { kind, uri }.into()
@@ -115,7 +115,7 @@ impl Session {
     }
 
     pub async fn get_tree(&self, uri: &lsp::Url) -> anyhow::Result<Ref<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
-        self.trees.get(uri).ok_or_else(|| {
+        self.document_trees.get(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Tree;
             let uri = uri.clone();
             core::Error::SessionResourceNotFound { kind, uri }.into()
@@ -123,7 +123,7 @@ impl Session {
     }
 
     pub async fn get_mut_tree(&self, uri: &lsp::Url) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
-        self.trees.get_mut(uri).ok_or_else(|| {
+        self.document_trees.get_mut(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Tree;
             let uri = uri.clone();
             core::Error::SessionResourceNotFound { kind, uri }.into()
