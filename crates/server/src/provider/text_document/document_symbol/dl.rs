@@ -1,6 +1,6 @@
 use crate::{
     core::{self, language::dl},
-    provider::document_symbol::{symbol_range, Data, SymbolRange, Work},
+    provider::text_document::document_symbol::{symbol_range, Data, SymbolRange, Work},
 };
 use std::sync::Arc;
 
