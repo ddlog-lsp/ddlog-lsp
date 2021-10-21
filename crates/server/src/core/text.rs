@@ -1,14 +1,13 @@
-use crate::core;
 use std::convert::TryInto;
 
 pub struct Text {
-    pub language: core::Language,
+    pub language: crate::core::Language,
     pub content: ropey::Rope,
 }
 
 impl Text {
     pub fn new(
-        language_id: impl TryInto<core::Language, Error = anyhow::Error>,
+        language_id: impl TryInto<crate::core::Language, Error = anyhow::Error>,
         text: impl AsRef<str>,
     ) -> anyhow::Result<Self> {
         let text = text.as_ref();

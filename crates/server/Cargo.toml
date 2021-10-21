@@ -18,7 +18,7 @@ maintenance = { status = "experimental" }
 default = ["runtime-tokio"]
 goldenfiles = []
 runtime-agnostic = ["async-lock", "lspower/runtime-agnostic"]
-runtime-tokio = ["lspower/runtime-tokio", "tokio", "tokio/rt-multi-thread"]
+runtime-tokio = ["lspower/runtime-tokio", "tokio", "tokio/rt-multi-thread", "tokio-stream"]
 
 [build-dependencies]
 anyhow = "1.0"
@@ -41,7 +41,9 @@ lspower = { version = "1.1", default-features = false }
 ropey = "1.2"
 serde_json = "1.0"
 thiserror = "1.0"
-tokio = { version = "1.0", features = ["io-std", "sync"], optional = true }
+tokio = { version = "1.0", features = ["fs", "io-std", "sync"], optional = true }
+tokio-stream = { version = "0.1", features = ["fs"], optional = true }
+twoway = "0.2"
 
 [dependencies.tree-sitter]
 package = "tree-sitter-facade"

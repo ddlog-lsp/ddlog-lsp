@@ -1,4 +1,3 @@
-use crate::core;
 use thiserror::Error;
 
 #[allow(clippy::enum_variant_names)]
@@ -8,9 +7,9 @@ pub enum Error {
     ClientNotInitialized,
     #[error("ColumnOutOfBounds: given={given:?}, max={max:?}")]
     ColumnOutOfBounds { given: usize, max: usize },
-    #[error("core::SessionResourceNotFound: kind={kind:?}, uri={uri:?}")]
+    #[error("crate::core::SessionResourceNotFound: kind={kind:?}, uri={uri:?}")]
     SessionResourceNotFound {
-        kind: core::session::SessionResourceKind,
+        kind: crate::core::session::SessionResourceKind,
         uri: lsp::Url,
     },
     #[error("LineOutOfBounds: given={given:?}, max={max:?}")]

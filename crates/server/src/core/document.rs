@@ -1,4 +1,3 @@
-use crate::core::{self};
 use lsp_text::{RopeExt, TextEdit};
 use std::{convert::TryFrom, sync::Arc};
 
@@ -9,16 +8,16 @@ use tokio::sync::Mutex;
 
 pub struct Document {
     pub uri: lsp::Url,
-    pub language: core::Language,
+    pub language: crate::core::Language,
     pub content: ropey::Rope,
     pub parser: tree_sitter::Parser,
     pub tree: tree_sitter::Tree,
 }
 
 impl Document {
-    pub fn open(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Option<Self>> {
+    pub fn open_from_lsp(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Option<Self>> {
         let uri = params.text_document.uri;
-        let language = core::Language::try_from(params.text_document.language_id.as_str())?;
+        let language = crate::core::Language::try_from(params.text_document.language_id.as_str())?;
         let mut parser = tree_sitter::Parser::try_from(language)?;
         let content = ropey::Rope::from(params.text_document.text);
         let result = {
@@ -28,7 +27,7 @@ impl Document {
             let old_tree = None;
             parser.parse(text, old_tree)?
         };
-        Ok(result.map(|tree| core::Document {
+        Ok(result.map(|tree| crate::core::Document {
             uri,
             language,
             content,
@@ -37,8 +36,30 @@ impl Document {
         }))
     }
 
+    pub async fn open_from_uri(uri: lsp::Url) -> anyhow::Result<Option<Self>> {
+        if let Ok(path) = uri.to_file_path() {
+            let language = crate::core::Language::try_from(path.as_path())?;
+            let params = lsp::DidOpenTextDocumentParams {
+                text_document: {
+                    let language_id = language.id().into();
+                    let version = Default::default();
+                    let text = tokio::fs::read_to_string(path).await?;
+                    lsp::TextDocumentItem {
+                        uri,
+                        language_id,
+                        version,
+                        text,
+                    }
+                },
+            };
+            Self::open_from_lsp(params)
+        } else {
+            anyhow::bail!("Could not convert uri to file path: {:#?}", uri);
+        }
+    }
+
     pub async fn change<'changes>(
-        session: Arc<core::Session>,
+        session: Arc<crate::core::Session>,
         uri: &lsp::Url,
         content: &ropey::Rope,
         edits: &[TextEdit<'changes>],
@@ -70,8 +91,8 @@ impl Document {
         }
     }
 
-    pub fn text(&self) -> core::Text {
-        core::Text {
+    pub fn text(&self) -> crate::core::Text {
+        crate::core::Text {
             language: self.language,
             content: self.content.clone(),
         }

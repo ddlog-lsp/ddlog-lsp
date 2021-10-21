@@ -1,6 +1,5 @@
 #![allow(unused)]
 
-use crate::core::{self};
 use lsp_text::RopeExt;
 use std::sync::Arc;
 
@@ -67,14 +66,14 @@ pub fn symbol_range(
 
 /// Compute "textDocument/documentSymbols" for a given document.
 pub async fn document_symbol(
-    session: Arc<core::Session>,
+    session: Arc<crate::core::Session>,
     params: lsp::DocumentSymbolParams,
 ) -> anyhow::Result<Option<lsp::DocumentSymbolResponse>> {
     let text = session.get_text(&params.text_document.uri).await?;
     let session = session.clone();
     let response = match text.language {
-        core::Language::DDlogDat => self::dat::document_symbol(session, params, &text.content).await?,
-        core::Language::DDlogDl => self::dl::document_symbol(session, params, &text.content).await?,
+        crate::core::Language::DDlogDat => self::dat::document_symbol(session, params, &text.content).await?,
+        crate::core::Language::DDlogDl => self::dl::document_symbol(session, params, &text.content).await?,
     };
     Ok(response)
 }

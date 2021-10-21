@@ -1,15 +1,14 @@
-use crate::{core, handler};
 use lspower::jsonrpc;
 use std::sync::Arc;
 
 pub struct Server {
     pub client: lspower::Client,
-    pub session: Arc<core::Session>,
+    pub session: Arc<crate::core::Session>,
 }
 
 impl Server {
     pub fn new(client: lspower::Client) -> anyhow::Result<Self> {
-        let session = Arc::new(core::Session::new(Some(client.clone()))?);
+        let session = Arc::new(crate::core::Session::new(Some(client.clone()))?);
         Ok(Server { client, session })
     }
 }
@@ -37,10 +36,18 @@ pub fn capabilities() -> lsp::ServerCapabilities {
         Some(options)
     };
 
+    let workspace_symbol_provider = {
+        let options = lsp::WorkspaceSymbolOptions {
+            work_done_progress_options: Default::default(),
+        };
+        Some(lsp::OneOf::Right(options))
+    };
+
     lsp::ServerCapabilities {
         text_document_sync,
         document_symbol_provider,
         workspace,
+        workspace_symbol_provider,
         ..Default::default()
     }
 }
@@ -52,7 +59,8 @@ impl lspower::LanguageServer for Server {
         if let Some(workspace_folders) = params.workspace_folders {
             self.session
                 .insert_workspace_folders(workspace_folders)
-                .map_err(core::IntoJsonRpcError)?;
+                .await
+                .map_err(crate::core::IntoJsonRpcError)?;
         }
         let capabilities = capabilities();
         Ok(lsp::InitializeResult {
@@ -73,23 +81,25 @@ impl lspower::LanguageServer for Server {
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         let session = self.session.clone();
-        handler::text_document::did_open(session, params).await.unwrap()
+        crate::handler::text_document::did_open(session, params).await.unwrap()
     }
 
     async fn did_change(&self, params: lsp::DidChangeTextDocumentParams) {
         let session = self.session.clone();
-        handler::text_document::did_change(session, params).await.unwrap()
+        crate::handler::text_document::did_change(session, params)
+            .await
+            .unwrap()
     }
 
     async fn did_change_workspace_folders(&self, params: lsp::DidChangeWorkspaceFoldersParams) {
         let session = self.session.clone();
-        let result = handler::workspace::did_change_workspace_folders(session, params).await;
+        let result = crate::handler::workspace::did_change_workspace_folders(session, params).await;
         result.unwrap();
     }
 
     async fn did_close(&self, params: lsp::DidCloseTextDocumentParams) {
         let session = self.session.clone();
-        handler::text_document::did_close(session, params).await.unwrap()
+        crate::handler::text_document::did_close(session, params).await.unwrap()
     }
 
     async fn document_symbol(
@@ -97,7 +107,13 @@ impl lspower::LanguageServer for Server {
         params: lsp::DocumentSymbolParams,
     ) -> jsonrpc::Result<Option<lsp::DocumentSymbolResponse>> {
         let session = self.session.clone();
-        let result = handler::text_document::document_symbol(session, params).await;
-        Ok(result.map_err(core::IntoJsonRpcError)?)
+        let result = crate::handler::text_document::document_symbol(session, params).await;
+        Ok(result.map_err(crate::core::IntoJsonRpcError)?)
+    }
+
+    async fn symbol(&self, params: lsp::WorkspaceSymbolParams) -> jsonrpc::Result<Option<Vec<lsp::SymbolInformation>>> {
+        let session = self.session.clone();
+        let result = crate::handler::workspace::symbol(session, params).await;
+        Ok(result.map_err(crate::core::IntoJsonRpcError)?)
     }
 }
