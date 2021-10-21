@@ -1,5 +1,5 @@
 [package]
-edition = "2018"
+edition = "2021"
 name = "ddlog-lsp-cli"
 version = "0.0.0"
 authors = ["hvithrafn <hvithrafn@users.noreply.github.com>"]
