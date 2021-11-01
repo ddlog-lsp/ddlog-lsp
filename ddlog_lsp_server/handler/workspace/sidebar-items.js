@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["did_change_workspace_folders",""],["symbol",""]]});

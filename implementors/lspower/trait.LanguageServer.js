@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ddlog_lsp_server"] = [{"text":"impl LanguageServer for <a class=\"struct\" href=\"ddlog_lsp_server/server/struct.Server.html\" title=\"struct ddlog_lsp_server::server::Server\">Server</a>","synthetic":false,"types":["ddlog_lsp_server::server::Server"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

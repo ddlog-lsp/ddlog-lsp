@@ -1,0 +1,3 @@
+var N = null;var sourcesIndex = {};
+sourcesIndex["ddlog_lsp_server"] = {"name":"","dirs":[{"name":"analysis","dirs":[{"name":"document_symbol","files":["dat.rs","dl.rs"]}],"files":["document_symbol.rs"]},{"name":"core","files":["document.rs","error.rs","session.rs","text.rs","workspace_folder.rs"]},{"name":"handler","files":["text_document.rs","workspace.rs"]},{"name":"provider","dirs":[{"name":"text_document","dirs":[{"name":"diagnostics","files":["dat.rs","dl.rs"]},{"name":"document_symbol","files":["dat.rs","dl.rs"]}],"files":["diagnostics.rs","document_symbol.rs"]}],"files":["text_document.rs","workspace.rs"]}],"files":["analysis.rs","core.rs","handler.rs","lib.rs","package.rs","provider.rs","server.rs"]};
+createSourceSidebar();

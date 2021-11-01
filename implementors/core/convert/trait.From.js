@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["ddlog_lsp_server"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/convert/trait.From.html\" title=\"trait core::convert::From\">From</a>&lt;<a class=\"struct\" href=\"ddlog_lsp_server/core/struct.IntoJsonRpcError.html\" title=\"struct ddlog_lsp_server::core::IntoJsonRpcError\">IntoJsonRpcError</a>&gt; for Error","synthetic":false,"types":["lspower::jsonrpc::error::Error"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

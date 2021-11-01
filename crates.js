@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["ddlog_lsp_server"];

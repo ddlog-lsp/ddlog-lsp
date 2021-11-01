@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["dat","Create a `.dat` parser from the tree-sitter grammar."],["dl","Create a `.dl` parser from the tree-sitter grammar."]]});
