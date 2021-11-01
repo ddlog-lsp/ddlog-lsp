@@ -6,7 +6,6 @@ pub async fn document_symbol(
     params: lsp::DocumentSymbolParams,
 ) -> anyhow::Result<Vec<lsp::SymbolInformation>> {
     let text = session.get_text(&params.text_document.uri).await?;
-    let session = session.clone();
     let response = match text.language {
         crate::core::Language::DDlogDat => self::dat::document_symbol(session, params, &text.content).await?,
         crate::core::Language::DDlogDl => self::dl::document_symbol(session, params, &text.content).await?,

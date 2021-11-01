@@ -13,7 +13,7 @@ pub async fn symbol(
     session: Arc<crate::core::Session>,
     params: lsp::WorkspaceSymbolParams,
 ) -> anyhow::Result<Option<Vec<lsp::SymbolInformation>>> {
-    let query_patterns = params.query.split(" ").collect::<Vec<_>>();
+    let query_patterns = params.query.split(' ').collect::<Vec<_>>();
     let results = session
         .document_symbols
         .iter()
