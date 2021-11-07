@@ -38,6 +38,7 @@ log = "0.4"
 lsp = { version = "0.89", package = "lsp-types" }
 lsp-text = { version = "0.1", features = ["tree-sitter"] }
 lspower = { version = "1.1", default-features = false }
+pin-project-lite = "0.2"
 ropey = "1.2"
 serde_json = "1.0"
 thiserror = "1.0"

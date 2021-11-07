@@ -576,6 +576,7 @@ dependencies = [
  "lsp-text",
  "lsp-types",
  "lspower",
+ "pin-project-lite",
  "ropey",
  "serde_json",
  "thiserror",

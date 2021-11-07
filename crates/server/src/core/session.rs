@@ -4,7 +4,6 @@ use dashmap::{
     DashSet,
 };
 use futures::{future, stream::StreamExt};
-use std::convert::TryFrom;
 
 #[cfg(feature = "runtime-agnostic")]
 use async_lock::{Mutex, RwLock};

@@ -2,6 +2,7 @@
 
 mod document;
 mod error;
+mod future;
 mod session;
 mod text;
 mod workspace_folder;
