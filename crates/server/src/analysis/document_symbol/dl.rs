@@ -11,7 +11,12 @@ pub async fn document_symbol(
 ) -> anyhow::Result<Vec<lsp::SymbolInformation>> {
     // Prepare the syntax tree.
     let uri = &params.text_document.uri;
-    let tree = session.get_tree(uri).await?;
+    let tree = session.get_tree(uri).await?.clone().await.ok_or_else(|| {
+        anyhow::anyhow!(
+            "could not resolve previous tree for uri: {:#?}",
+            params.text_document.uri
+        )
+    })?;
     let tree = tree.lock().await;
     let node = tree.root_node();
 

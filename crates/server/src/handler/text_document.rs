@@ -1,3 +1,5 @@
+use crate::core::EagerFutureExt;
+use futures::future;
 use lsp_text::RopeExt;
 use std::sync::Arc;
 
@@ -7,25 +9,32 @@ pub async fn did_change(
 ) -> anyhow::Result<()> {
     let uri = &params.text_document.uri;
     let mut text = session.get_mut_text(uri).await?;
+    let mut content = text
+        .content
+        .clone()
+        .await
+        .ok_or_else(|| anyhow::anyhow!("could not resolve text content for uri: {:#?}", uri))?;
 
     let edits = params
         .content_changes
         .iter()
-        .map(|change| text.content.build_edit(change))
+        .map(|change| content.build_edit(change))
         .collect::<Result<Vec<_>, _>>()?;
 
     for edit in &edits {
-        text.content.apply_edit(edit);
+        content.apply_edit(edit);
     }
 
-    if let Some(tree) = crate::core::Document::change(session.clone(), uri, &text.content, &edits).await? {
-        let diagnostics = crate::provider::text_document::diagnostics(&tree, uri, &text);
+    if let Some(tree) = crate::core::Document::change(session.clone(), uri, &content, &edits).await? {
+        let diagnostics = crate::provider::text_document::diagnostics(&tree, uri, text.language, &content);
         let version = Default::default();
         session
             .client()?
             .publish_diagnostics(uri.clone(), diagnostics, version)
             .await;
     }
+
+    text.content = future::ready(content).eager();
 
     Ok(())
 }
@@ -63,13 +72,19 @@ pub async fn did_open(
 
     let workspace_folder = None;
     let uri = params.text_document.uri.clone();
-    if let Some(document) = crate::core::Document::open_from_lsp(params)? {
-        let tree = document.tree.clone();
+
+    let document = crate::core::Document::open_from_lsp(params)?;
+    if let Some(tree) = document.tree.clone().await {
+        let tree = tree.lock().await;
         let text = document.text();
-        session.insert_document(workspace_folder, document).await?;
-        let diagnostics = crate::provider::text_document::diagnostics(&tree, &uri, &text);
-        let version = Default::default();
-        session.client()?.publish_diagnostics(uri, diagnostics, version).await;
+        if let Some(content) = text.content.clone().await {
+            session.insert_document(workspace_folder, document).await?;
+            let diagnostics = crate::provider::text_document::diagnostics(&tree, &uri, text.language, &content);
+            let version = Default::default();
+            session.client()?.publish_diagnostics(uri, diagnostics, version).await;
+        } else {
+            unreachable!("text cannot be None if tree is Some");
+        }
     } else {
         log::warn!("'textDocument/didOpen' failed :: uri: {:#?}", uri);
     }

@@ -1,10 +1,11 @@
+use crate::core::future::EagerFuture;
 use dashmap::{
     mapref::one::{Ref, RefMut},
     DashMap,
     DashSet,
 };
 use futures::{future, stream::StreamExt};
-use std::convert::TryFrom;
+use std::sync::Arc;
 
 #[cfg(feature = "runtime-agnostic")]
 use async_lock::{Mutex, RwLock};
@@ -26,8 +27,8 @@ pub struct Session {
     pub document_workspaces: DashMap<lsp::Url, crate::core::WorkspaceFolder>,
     pub document_states: DashMap<lsp::Url, crate::core::DocumentState>,
     document_texts: DashMap<lsp::Url, crate::core::Text>,
-    pub document_parsers: DashMap<lsp::Url, Mutex<tree_sitter::Parser>>,
-    pub document_trees: DashMap<lsp::Url, Mutex<tree_sitter::Tree>>,
+    pub document_parsers: DashMap<lsp::Url, Arc<Mutex<tree_sitter::Parser>>>,
+    pub document_trees: DashMap<lsp::Url, EagerFuture<Option<Arc<Mutex<tree_sitter::Tree>>>>>,
     pub document_symbols: DashMap<lsp::Url, Vec<lsp::SymbolInformation>>,
 }
 
@@ -90,13 +91,11 @@ impl Session {
         debug_assert!(result.is_none());
 
         // create document_parsers entry
-        let result = self
-            .document_parsers
-            .insert(document.uri.clone(), Mutex::new(document.parser));
+        let result = self.document_parsers.insert(document.uri.clone(), document.parser);
         debug_assert!(result.is_none());
 
         // create document_trees entry
-        let result = self.document_trees.insert(uri.clone(), Mutex::new(document.tree));
+        let result = self.document_trees.insert(uri.clone(), document.tree);
         debug_assert!(result.is_none());
 
         // create document_symbols entry
@@ -176,7 +175,7 @@ impl Session {
     pub async fn get_mut_parser(
         &self,
         uri: &lsp::Url,
-    ) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Parser>>> {
+    ) -> anyhow::Result<RefMut<'_, lsp::Url, Arc<Mutex<tree_sitter::Parser>>>> {
         self.document_parsers.get_mut(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Parser;
             let uri = uri.clone();
@@ -186,7 +185,10 @@ impl Session {
 }
 
 impl Session {
-    pub async fn get_tree(&self, uri: &lsp::Url) -> anyhow::Result<Ref<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
+    pub async fn get_tree(
+        &self,
+        uri: &lsp::Url,
+    ) -> anyhow::Result<Ref<'_, lsp::Url, EagerFuture<Option<Arc<Mutex<tree_sitter::Tree>>>>>> {
         self.document_trees.get(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Tree;
             let uri = uri.clone();
@@ -194,7 +196,10 @@ impl Session {
         })
     }
 
-    pub async fn get_mut_tree(&self, uri: &lsp::Url) -> anyhow::Result<RefMut<'_, lsp::Url, Mutex<tree_sitter::Tree>>> {
+    pub async fn get_mut_tree(
+        &self,
+        uri: &lsp::Url,
+    ) -> anyhow::Result<RefMut<'_, lsp::Url, EagerFuture<Option<Arc<Mutex<tree_sitter::Tree>>>>>> {
         self.document_trees.get_mut(uri).ok_or_else(|| {
             let kind = SessionResourceKind::Tree;
             let uri = uri.clone();
@@ -208,12 +213,11 @@ impl Session {
         for workspace_folder in workspaces {
             if let Some(workspace_document_uris) = self.collect_workspace_document_uris(&workspace_folder).await? {
                 for item in workspace_document_uris.iter() {
-                    if let Some(document) = crate::core::Document::open_from_uri(item.key().clone()).await? {
-                        let workspace_folder = workspace_folder.clone();
-                        let workspace_folder = crate::core::workspace_folder::WorkspaceFolder(workspace_folder);
-                        let workspace_folder = Some(workspace_folder);
-                        self.insert_document(workspace_folder, document).await?;
-                    }
+                    let document = crate::core::Document::open_from_uri(item.key().clone())?;
+                    let workspace_folder = workspace_folder.clone();
+                    let workspace_folder = crate::core::workspace_folder::WorkspaceFolder(workspace_folder);
+                    let workspace_folder = Some(workspace_folder);
+                    self.insert_document(workspace_folder, document).await?;
                 }
                 self.workspace_documents
                     .insert(crate::core::WorkspaceFolder(workspace_folder), workspace_document_uris);

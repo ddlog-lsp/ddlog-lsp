@@ -70,10 +70,16 @@ pub async fn document_symbol(
     params: lsp::DocumentSymbolParams,
 ) -> anyhow::Result<Option<lsp::DocumentSymbolResponse>> {
     let text = session.get_text(&params.text_document.uri).await?;
+    let content = text.content.clone().await.ok_or_else(|| {
+        anyhow::anyhow!(
+            "could not resolve text content for uri: {:#?}",
+            params.text_document.uri
+        )
+    })?;
     let session = session.clone();
     let response = match text.language {
-        crate::core::Language::DDlogDat => self::dat::document_symbol(session, params, &text.content).await?,
-        crate::core::Language::DDlogDl => self::dl::document_symbol(session, params, &text.content).await?,
+        crate::core::Language::DDlogDat => self::dat::document_symbol(session, params, &content).await?,
+        crate::core::Language::DDlogDl => self::dl::document_symbol(session, params, &content).await?,
     };
     Ok(response)
 }
