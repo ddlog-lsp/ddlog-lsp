@@ -1,3 +1,5 @@
+use crate::core::future::EagerFuture;
+use futures::{future, FutureExt};
 use lsp_text::{RopeExt, TextEdit};
 use std::{convert::TryFrom, sync::Arc};
 
@@ -5,6 +7,88 @@ use std::{convert::TryFrom, sync::Arc};
 use async_lock::Mutex;
 #[cfg(feature = "runtime-tokio")]
 use tokio::sync::Mutex;
+
+pub struct DocumentFuture {
+    pub uri: lsp::Url,
+    pub language: crate::core::Language,
+    pub content: EagerFuture<'static, ropey::Rope>,
+    pub parser: EagerFuture<'static, Option<Arc<Mutex<tree_sitter::Parser>>>>,
+    pub tree: EagerFuture<'static, Option<tree_sitter::Tree>>,
+}
+
+impl DocumentFuture {
+    pub async fn open_from_lsp(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Self> {
+        let uri = params.text_document.uri;
+
+        let language = crate::core::Language::try_from(params.text_document.language_id.as_str())?;
+
+        let mut parser = {
+            let language = language.clone();
+            let val = tokio::spawn(async move {
+                let val = tree_sitter::Parser::try_from(language);
+                if let Ok(parser) = val {
+                    Some(Arc::new(Mutex::new(parser)))
+                } else {
+                    None
+                }
+            });
+            let val = val.map(Result::ok).map(Option::flatten);
+            let val = EagerFuture::new(val);
+            val
+        };
+
+        let content = ropey::Rope::from(params.text_document.text);
+
+        let tree = {
+            let parser = parser.clone();
+            let content = content.clone();
+            let byte_idx = 0;
+            let text = content.chunks().collect::<String>();
+            let old_tree = None;
+            let val = tokio::spawn(async move {
+                if let Some(parser) = parser.await {
+                    let mut parser = parser.lock().await;
+                    parser.parse(text, old_tree).unwrap()
+                } else {
+                    None
+                }
+            });
+            let val = val.map(Result::ok).map(Option::flatten);
+            EagerFuture::new(val)
+        };
+
+        let content = {
+            let val = ropey::Rope::from(content);
+            let val = future::ready(val);
+            EagerFuture::new(val)
+        };
+
+        Ok(DocumentFuture {
+            uri,
+            language,
+            content,
+            parser,
+            tree,
+        })
+    }
+
+    pub async fn open_from_uri(uri: lsp::Url) -> anyhow::Result<Option<Self>> {
+        todo!()
+    }
+
+    pub async fn change<'changes>(
+        session: Arc<crate::core::Session>,
+        uri: &lsp::Url,
+        content: &ropey::Rope,
+        edits: &[TextEdit<'changes>],
+    ) -> anyhow::Result<Option<tree_sitter::Tree>> {
+        todo!()
+    }
+
+    pub fn text(&self) -> crate::core::Text {
+        todo!()
+    }
+}
 
 pub struct Document {
     pub uri: lsp::Url,
@@ -27,7 +111,7 @@ impl Document {
             let old_tree = None;
             parser.parse(text, old_tree)?
         };
-        Ok(result.map(|tree| crate::core::Document {
+        Ok(result.map(|tree| Document {
             uri,
             language,
             content,
