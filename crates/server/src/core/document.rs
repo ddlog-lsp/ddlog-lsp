@@ -12,7 +12,7 @@ pub struct DocumentFuture {
     pub uri: lsp::Url,
     pub language: crate::core::Language,
     pub content: EagerFuture<Option<ropey::Rope>>,
-    pub parser: EagerFuture<Option<Arc<Mutex<tree_sitter::Parser>>>>,
+    pub parser: Arc<Mutex<tree_sitter::Parser>>,
     pub tree: EagerFuture<Option<tree_sitter::Tree>>,
 }
 
@@ -20,20 +20,25 @@ impl DocumentFuture {
     pub fn open_from_lsp(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Self> {
         let uri = params.text_document.uri;
         let language = crate::core::Language::try_from(params.text_document.language_id.as_str())?;
-        let mut parser = tree_sitter::Parser::try_from(language)?;
+        let parser = Arc::new(Mutex::new(tree_sitter::Parser::try_from(language)?));
         let content = ropey::Rope::from(params.text_document.text);
 
         let tree = {
+            let parser = parser.clone();
             let content = content.clone();
             let byte_idx = 0;
-            let text = content.chunks().collect::<String>();
             let old_tree = None;
-            parser.parse(text, old_tree)?
-        };
+
+            async move {
+                let text = content.chunks().collect::<String>();
+                let mut parser = parser.lock().await;
+                parser.parse(text, old_tree).ok().flatten()
+            }
+        }
+        .eager()
+        .flatten();
 
         let content = EagerFuture::new(future::ready(Some(content)));
-        let parser = EagerFuture::new(future::ready(Some(Arc::new(Mutex::new(parser)))));
-        let tree = EagerFuture::new(future::ready(tree));
 
         Ok(DocumentFuture {
             uri,
@@ -48,18 +53,13 @@ impl DocumentFuture {
         if let Ok(path) = uri.to_file_path() {
             let language = crate::core::Language::try_from(path.as_path())?;
 
-            let parser = async move {
-                tree_sitter::Parser::try_from(language)
-                    .ok()
-                    .map(|parser| Arc::new(Mutex::new(parser)))
-            }
-            .eager()
-            .flatten();
+            let parser = Arc::new(Mutex::new(tree_sitter::Parser::try_from(language)?));
 
             let content = async {
                 let text = tokio::fs::read_to_string(path).await.unwrap();
                 ropey::Rope::from(text)
-            }.eager();
+            }
+            .eager();
 
             let tree = {
                 let parser = parser.clone();
@@ -68,10 +68,10 @@ impl DocumentFuture {
                 let old_tree = None;
 
                 async move {
-                    if let (Some(text), Some(parser)) = (content.await, parser.await) {
+                    if let Some(text) = content.await {
                         let text = text.chunks().collect::<String>();
                         let mut parser = parser.lock().await;
-                        parser.parse(text, old_tree).unwrap()
+                        parser.parse(text, old_tree).ok().flatten()
                     } else {
                         None
                     }
