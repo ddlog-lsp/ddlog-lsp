@@ -49,7 +49,6 @@ impl DocumentFuture {
             let language = crate::core::Language::try_from(path.as_path())?;
 
             let mut parser = {
-                let language = language.clone();
                 let val = tokio::spawn(async move {
                     let val = tree_sitter::Parser::try_from(language);
                     if let Ok(parser) = val {
@@ -59,8 +58,7 @@ impl DocumentFuture {
                     }
                 });
                 let val = val.map(Result::ok).map(Option::flatten);
-                let val = EagerFuture::new(val);
-                val
+                EagerFuture::new(val)
             };
 
             let text = tokio::fs::read_to_string(path).await?;
@@ -85,8 +83,7 @@ impl DocumentFuture {
             };
 
             let content = {
-                let val = ropey::Rope::from(content);
-                let val = future::ready(val);
+                let val = future::ready(content);
                 EagerFuture::new(val)
             };
 
