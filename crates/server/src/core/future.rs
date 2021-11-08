@@ -9,24 +9,34 @@ use pin_project_lite::pin_project;
 
 pin_project! {
     #[derive(Debug, Clone)]
-    pub struct EagerFuture<'a, T> {
+    pub struct EagerFuture<T> {
         #[pin]
-        pinned: Shared<BoxFuture<'a, T>>,
+        pinned: Shared<BoxFuture<'static, T>>,
     }
 }
 
-impl<'a, T> EagerFuture<'a, T> {
+impl<T> EagerFuture<T> {
     pub fn new<F>(future: F) -> Self
     where
-        F: Future<Output = T> + Send + 'a,
-        <F as Future>::Output: Clone,
+        F: Future<Output = T> + Send + 'static,
+        T: Clone,
     {
         let pinned = future.boxed().shared();
         Self { pinned }
     }
 }
 
-impl<'a, T: Clone> Future for EagerFuture<'a, T> {
+impl<'a, T: Clone + Send + 'static> EagerFuture<Option<Option<T>>> {
+    pub fn flatten(self) -> EagerFuture<Option<T>>
+    where
+        Self: Send,
+    {
+        let pinned = async { self.await.flatten() }.boxed().shared();
+        EagerFuture { pinned }
+    }
+}
+
+impl<T: Clone> Future for EagerFuture<T> {
     type Output = T;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
@@ -34,12 +44,16 @@ impl<'a, T: Clone> Future for EagerFuture<'a, T> {
     }
 }
 
-pub trait EagerFutureExt: Sized {
-    fn eager(self) -> EagerFuture<'static, Option<<Self as Future>::Output>>
-    where
-        Self: Future + Send + 'static,
-        <Self as Future>::Output: Clone + Send + 'static,
-    {
+pub trait EagerFutureExt: Future {
+    fn eager(self) -> EagerFuture<Option<<Self as Future>::Output>>;
+}
+
+impl<T: Sized> EagerFutureExt for T
+where
+    T: Future + Send + 'static,
+    <T as Future>::Output: Clone + Send,
+{
+    fn eager(self) -> EagerFuture<Option<<T as Future>::Output>> {
         let pinned = tokio::spawn(self).map(Result::ok).boxed().shared();
         EagerFuture { pinned }
     }

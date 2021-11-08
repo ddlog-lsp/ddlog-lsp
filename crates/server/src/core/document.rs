@@ -1,4 +1,4 @@
-use crate::core::future::EagerFuture;
+use crate::core::future::{EagerFuture, EagerFutureExt};
 use futures::{future, FutureExt};
 use lsp_text::{RopeExt, TextEdit};
 use std::{convert::TryFrom, sync::Arc};
@@ -11,9 +11,9 @@ use tokio::sync::Mutex;
 pub struct DocumentFuture {
     pub uri: lsp::Url,
     pub language: crate::core::Language,
-    pub content: EagerFuture<'static, ropey::Rope>,
-    pub parser: EagerFuture<'static, Option<Arc<Mutex<tree_sitter::Parser>>>>,
-    pub tree: EagerFuture<'static, Option<tree_sitter::Tree>>,
+    pub content: EagerFuture<ropey::Rope>,
+    pub parser: EagerFuture<Option<Arc<Mutex<tree_sitter::Parser>>>>,
+    pub tree: EagerFuture<Option<tree_sitter::Tree>>,
 }
 
 impl DocumentFuture {
@@ -48,16 +48,13 @@ impl DocumentFuture {
         if let Ok(path) = uri.to_file_path() {
             let language = crate::core::Language::try_from(path.as_path())?;
 
-            let mut parser = {
-                let val = tokio::spawn(async move {
-                    tree_sitter::Parser::try_from(language)
-                        .ok()
-                        .map(|parser| Arc::new(Mutex::new(parser)))
-                })
-                .map(Result::ok)
-                .map(Option::flatten);
-                EagerFuture::new(val)
-            };
+            let parser = async move {
+                tree_sitter::Parser::try_from(language)
+                    .ok()
+                    .map(|parser| Arc::new(Mutex::new(parser)))
+            }
+            .eager()
+            .flatten();
 
             let text = tokio::fs::read_to_string(path).await?;
             let content = ropey::Rope::from(text);

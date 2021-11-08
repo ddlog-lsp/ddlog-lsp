@@ -4,7 +4,7 @@ use std::convert::TryInto;
 
 pub struct TextFuture {
     pub language: crate::core::Language,
-    pub content: EagerFuture<'static, ropey::Rope>,
+    pub content: EagerFuture<ropey::Rope>,
 }
 
 impl TextFuture {
