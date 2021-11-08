@@ -44,7 +44,7 @@ impl DocumentFuture {
         })
     }
 
-    pub async fn open_from_uri(uri: lsp::Url) -> anyhow::Result<Self> {
+    pub fn open_from_uri(uri: lsp::Url) -> anyhow::Result<Self> {
         if let Ok(path) = uri.to_file_path() {
             let language = crate::core::Language::try_from(path.as_path())?;
 
@@ -56,18 +56,20 @@ impl DocumentFuture {
             .eager()
             .flatten();
 
-            let text = tokio::fs::read_to_string(path).await?;
-            let content = ropey::Rope::from(text);
+            let content = async {
+                let text = tokio::fs::read_to_string(path).await.unwrap();
+                ropey::Rope::from(text)
+            }.eager();
 
             let tree = {
                 let parser = parser.clone();
                 let content = content.clone();
                 let byte_idx = 0;
-                let text = content.chunks().collect::<String>();
                 let old_tree = None;
 
                 async move {
-                    if let Some(parser) = parser.await {
+                    if let (Some(text), Some(parser)) = (content.await, parser.await) {
+                        let text = text.chunks().collect::<String>();
                         let mut parser = parser.lock().await;
                         parser.parse(text, old_tree).unwrap()
                     } else {
@@ -77,8 +79,6 @@ impl DocumentFuture {
             }
             .eager()
             .flatten();
-
-            let content = future::ready(content).eager();
 
             Ok(DocumentFuture {
                 uri,
