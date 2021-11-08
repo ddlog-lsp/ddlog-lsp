@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 pub struct DocumentFuture {
     pub uri: lsp::Url,
     pub language: crate::core::Language,
-    pub content: EagerFuture<ropey::Rope>,
+    pub content: EagerFuture<Option<ropey::Rope>>,
     pub parser: EagerFuture<Option<Arc<Mutex<tree_sitter::Parser>>>>,
     pub tree: EagerFuture<Option<tree_sitter::Tree>>,
 }
@@ -31,7 +31,7 @@ impl DocumentFuture {
             parser.parse(text, old_tree)?
         };
 
-        let content = EagerFuture::new(future::ready(content));
+        let content = EagerFuture::new(future::ready(Some(content)));
         let parser = EagerFuture::new(future::ready(Some(Arc::new(Mutex::new(parser)))));
         let tree = EagerFuture::new(future::ready(tree));
 
@@ -65,22 +65,20 @@ impl DocumentFuture {
                 let byte_idx = 0;
                 let text = content.chunks().collect::<String>();
                 let old_tree = None;
-                let val = tokio::spawn(async move {
+
+                async move {
                     if let Some(parser) = parser.await {
                         let mut parser = parser.lock().await;
                         parser.parse(text, old_tree).unwrap()
                     } else {
                         None
                     }
-                });
-                let val = val.map(Result::ok).map(Option::flatten);
-                EagerFuture::new(val)
-            };
+                }
+            }
+            .eager()
+            .flatten();
 
-            let content = {
-                let val = future::ready(content);
-                EagerFuture::new(val)
-            };
+            let content = future::ready(content).eager();
 
             Ok(DocumentFuture {
                 uri,
