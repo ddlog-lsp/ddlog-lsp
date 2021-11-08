@@ -1,5 +1,5 @@
 use crate::core::future::{EagerFuture, EagerFutureExt};
-use futures::{future, FutureExt};
+use futures::{future, FutureExt, TryFutureExt};
 use lsp_text::{RopeExt, TextEdit};
 use std::{convert::TryFrom, sync::Arc};
 
@@ -20,7 +20,9 @@ impl DocumentFuture {
     pub fn open_from_lsp(params: lsp::DidOpenTextDocumentParams) -> anyhow::Result<Self> {
         let uri = params.text_document.uri;
         let language = crate::core::Language::try_from(params.text_document.language_id.as_str())?;
+
         let parser = Arc::new(Mutex::new(tree_sitter::Parser::try_from(language)?));
+
         let content = ropey::Rope::from(params.text_document.text);
 
         let tree = {
@@ -55,11 +57,11 @@ impl DocumentFuture {
 
             let parser = Arc::new(Mutex::new(tree_sitter::Parser::try_from(language)?));
 
-            let content = async {
-                let text = tokio::fs::read_to_string(path).await.unwrap();
-                ropey::Rope::from(text)
-            }
-            .eager();
+            let content = tokio::fs::read_to_string(path)
+                .map_ok(ropey::Rope::from)
+                .map(Result::ok)
+                .eager()
+                .flatten();
 
             let tree = {
                 let parser = parser.clone();
