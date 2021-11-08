@@ -50,14 +50,12 @@ impl DocumentFuture {
 
             let mut parser = {
                 let val = tokio::spawn(async move {
-                    let val = tree_sitter::Parser::try_from(language);
-                    if let Ok(parser) = val {
-                        Some(Arc::new(Mutex::new(parser)))
-                    } else {
-                        None
-                    }
-                });
-                let val = val.map(Result::ok).map(Option::flatten);
+                    tree_sitter::Parser::try_from(language)
+                        .ok()
+                        .map(|parser| Arc::new(Mutex::new(parser)))
+                })
+                .map(Result::ok)
+                .map(Option::flatten);
                 EagerFuture::new(val)
             };
 

@@ -33,3 +33,14 @@ impl<'a, T: Clone> Future for EagerFuture<'a, T> {
         self.project().pinned.poll(cx)
     }
 }
+
+pub trait EagerFutureExt: Sized {
+    fn eager(self) -> EagerFuture<'static, Option<<Self as Future>::Output>>
+    where
+        Self: Future + Send + 'static,
+        <Self as Future>::Output: Clone + Send + 'static,
+    {
+        let pinned = tokio::spawn(self).map(Result::ok).boxed().shared();
+        EagerFuture { pinned }
+    }
+}
