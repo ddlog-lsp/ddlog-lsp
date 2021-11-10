@@ -101,7 +101,7 @@ impl Session {
         // create document_symbols entry
         let result = {
             let key = uri.clone();
-            let value = crate::analysis::document_symbol_from_uri(self, key.clone()).await?;
+            let value = crate::provider::common::document_symbol_from_uri(self, key.clone()).await?;
             self.document_symbols.insert(key, value)
         };
         debug_assert!(result.is_none());

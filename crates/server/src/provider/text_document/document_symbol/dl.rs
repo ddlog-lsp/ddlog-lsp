@@ -11,7 +11,7 @@ pub async fn document_symbol(
     content: &ropey::Rope,
 ) -> anyhow::Result<Option<lsp::DocumentSymbolResponse>> {
     let session = session.as_ref();
-    let result = crate::analysis::document_symbol::dl::document_symbol(session, params, content).await?;
+    let result = crate::provider::common::document_symbol::dl::document_symbol(session, params, content).await?;
     let result = lsp::DocumentSymbolResponse::Flat(result);
     let result = Some(result);
     Ok(result)
