@@ -4,8 +4,16 @@ use dashmap::{
     DashMap,
     DashSet,
 };
-use futures::{future, stream::StreamExt};
-use std::sync::Arc;
+use futures::{
+    future,
+    stream::{self, StreamExt},
+    Stream,
+};
+use std::{
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll},
+};
 
 #[cfg(feature = "runtime-agnostic")]
 use async_lock::{Mutex, RwLock};
@@ -211,17 +219,16 @@ impl Session {
 impl Session {
     pub async fn insert_workspace_folders(&self, workspaces: Vec<lsp::WorkspaceFolder>) -> anyhow::Result<()> {
         for workspace_folder in workspaces {
-            if let Some(workspace_document_uris) = self.collect_workspace_document_uris(&workspace_folder).await? {
-                for item in workspace_document_uris.iter() {
-                    let document = crate::core::Document::open_from_uri(item.key().clone())?;
-                    let workspace_folder = workspace_folder.clone();
-                    let workspace_folder = crate::core::workspace_folder::WorkspaceFolder(workspace_folder);
-                    let workspace_folder = Some(workspace_folder);
-                    self.insert_document(workspace_folder, document).await?;
-                }
-                self.workspace_documents
-                    .insert(crate::core::WorkspaceFolder(workspace_folder), workspace_document_uris);
+            let workspace_document_uris = self.collect_workspace_document_uris(&workspace_folder).await;
+            for item in workspace_document_uris.iter() {
+                let document = crate::core::Document::open_from_uri(item.key().clone())?;
+                let workspace_folder = workspace_folder.clone();
+                let workspace_folder = crate::core::workspace_folder::WorkspaceFolder(workspace_folder);
+                let workspace_folder = Some(workspace_folder);
+                self.insert_document(workspace_folder, document).await?;
             }
+            self.workspace_documents
+                .insert(crate::core::WorkspaceFolder(workspace_folder), workspace_document_uris);
         }
         Ok(())
     }
@@ -233,46 +240,10 @@ impl Session {
         }
     }
 
-    async fn collect_workspace_document_uris(
-        &self,
-        workspace_folder: &lsp::WorkspaceFolder,
-    ) -> anyhow::Result<Option<DashSet<lsp::Url>>> {
-        if let Ok(workspace_folder_path) = workspace_folder.uri.to_file_path() {
-            let mut work_stack = vec![workspace_folder_path];
-            let mut workspace_document_uris = DashSet::new();
-
-            while let Some(entry) = work_stack.pop() {
-                if entry.is_dir() {
-                    let read_dir = tokio::fs::read_dir(entry).await?;
-                    let read_dir_stream = tokio_stream::wrappers::ReadDirStream::new(read_dir);
-                    let dir_entries = read_dir_stream
-                        .filter_map(|read_dir| future::ready(Result::ok(read_dir)))
-                        .map(|dir_entry| dir_entry.path())
-                        .collect::<Vec<_>>()
-                        .await;
-                    work_stack.extend(dir_entries);
-                    continue;
-                }
-                if entry.is_file() {
-                    let entry_name = entry.to_string_lossy();
-
-                    // Conditionally filter ".fail.dl" files in debug mode (used for corpus tests)
-                    #[cfg(debug_assertions)]
-                    if entry_name.ends_with(".fail.dl") {
-                        continue;
-                    }
-
-                    if entry_name.ends_with(".dat") || entry_name.ends_with(".dl") {
-                        let uri = lsp::Url::from_file_path(&entry).unwrap();
-                        workspace_document_uris.insert(uri);
-                    }
-                    continue;
-                }
-            }
-
-            Ok(Some(workspace_document_uris))
-        } else {
-            Ok(None)
-        }
+    async fn collect_workspace_document_uris(&self, workspace_folder: &lsp::WorkspaceFolder) -> DashSet<lsp::Url> {
+        crate::analysis::fs::workspace_documents_paths(workspace_folder)
+            .map(|path| lsp::Url::from_file_path(path).expect("valid file paths should always parse as URLs"))
+            .collect::<DashSet<lsp::Url>>()
+            .await
     }
 }
