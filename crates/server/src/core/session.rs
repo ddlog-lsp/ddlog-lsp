@@ -1,4 +1,7 @@
-use crate::core::future::EagerFuture;
+use crate::{
+    core::future::{EagerFuture, EagerFutureExt},
+    handler::workspace,
+};
 use dashmap::{
     mapref::one::{Ref, RefMut},
     DashMap,
@@ -7,6 +10,7 @@ use dashmap::{
 use futures::{
     future,
     stream::{self, StreamExt},
+    FutureExt,
     Stream,
 };
 use std::{
@@ -37,7 +41,7 @@ pub struct Session {
     document_texts: DashMap<lsp::Url, crate::core::Text>,
     pub document_parsers: DashMap<lsp::Url, Arc<Mutex<tree_sitter::Parser>>>,
     pub document_trees: DashMap<lsp::Url, EagerFuture<Option<Arc<Mutex<tree_sitter::Tree>>>>>,
-    pub document_symbols: DashMap<lsp::Url, Vec<lsp::SymbolInformation>>,
+    pub document_symbols: DashMap<lsp::Url, EagerFuture<Option<Vec<lsp::SymbolInformation>>>>,
 }
 
 impl Session {
@@ -94,8 +98,11 @@ impl Session {
             .insert(document.uri.clone(), crate::core::DocumentState::Closed);
         debug_assert!(result.is_none());
 
+        let text = document.text();
+        let tree = document.tree.clone();
+
         // create document_texts entry
-        let result = self.document_texts.insert(uri.clone(), document.text());
+        let result = self.document_texts.insert(uri.clone(), text.clone());
         debug_assert!(result.is_none());
 
         // create document_parsers entry
@@ -103,13 +110,27 @@ impl Session {
         debug_assert!(result.is_none());
 
         // create document_trees entry
-        let result = self.document_trees.insert(uri.clone(), document.tree);
+        let result = self.document_trees.insert(uri.clone(), tree.clone());
         debug_assert!(result.is_none());
 
         // create document_symbols entry
         let result = {
             let key = uri.clone();
-            let value = crate::provider::common::document_symbol_from_uri(self, key.clone()).await?;
+            let value = {
+                let uri = uri.clone();
+                async move {
+                    let text = text.clone();
+                    if let Some(tree) = tree.clone().await {
+                        let tree = tree.lock().await;
+                        crate::provider::common::document_symbol_from_uri(text, &tree, uri.clone()).await
+                    } else {
+                        Err(anyhow::anyhow!("could not open tree for uri: {:#?}", uri.clone()))
+                    }
+                }
+                .map(Result::ok)
+                .eager()
+                .flatten()
+            };
             self.document_symbols.insert(key, value)
         };
         debug_assert!(result.is_none());

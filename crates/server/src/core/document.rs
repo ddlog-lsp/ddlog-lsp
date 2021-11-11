@@ -142,10 +142,7 @@ impl Document {
     }
 
     pub fn text(&self) -> crate::core::Text {
-        crate::core::Text {
-            language: self.language,
-            content: self.content.clone(),
-        }
+        crate::core::Text::new(self.language, self.content.clone())
     }
 }
 

@@ -5,19 +5,19 @@ use crate::{
 
 // Document symbol provider definitions for ".dl" files.
 pub async fn document_symbol(
-    session: &crate::core::Session,
+    tree: &tree_sitter::Tree,
     params: lsp::DocumentSymbolParams,
     content: &ropey::Rope,
 ) -> anyhow::Result<Vec<lsp::SymbolInformation>> {
     // Prepare the syntax tree.
     let uri = &params.text_document.uri;
-    let tree = session.get_tree(uri).await?.clone().await.ok_or_else(|| {
-        anyhow::anyhow!(
-            "could not resolve previous tree for uri: {:#?}",
-            params.text_document.uri
-        )
-    })?;
-    let tree = tree.lock().await;
+    // let tree = session.get_tree(uri).await?.clone().await.ok_or_else(|| {
+    //     anyhow::anyhow!(
+    //         "could not resolve previous tree for uri: {:#?}",
+    //         params.text_document.uri
+    //     )
+    // })?;
+    // let tree = tree.lock().await;
     let node = tree.root_node();
 
     // Vector to collect document symbols into as they are constructed.
