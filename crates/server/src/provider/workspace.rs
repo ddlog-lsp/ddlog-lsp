@@ -14,20 +14,16 @@ pub async fn symbol(
     params: lsp::WorkspaceSymbolParams,
 ) -> anyhow::Result<Option<Vec<lsp::SymbolInformation>>> {
     let query_patterns = params.query.split(' ').collect::<Vec<_>>();
-    let results = session
-        .document_symbols
-        .iter()
-        .flat_map(|item| {
-            item.value()
+    let mut results = vec![];
+    for item in session.document_symbols.iter() {
+        for info in item.value() {
+            if query_patterns
                 .iter()
-                .filter(|info| {
-                    query_patterns
-                        .iter()
-                        .all(|pattern| twoway::find_str(info.name.as_str(), pattern).is_some())
-                })
-                .cloned()
-                .collect::<Vec<lsp::SymbolInformation>>()
-        })
-        .collect::<Vec<_>>();
+                .all(|pattern| twoway::find_str(info.name.as_str(), pattern).is_some())
+            {
+                results.push(info.clone());
+            }
+        }
+    }
     Ok(Some(results))
 }
