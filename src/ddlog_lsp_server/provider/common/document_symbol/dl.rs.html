@@ -198,18 +198,6 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">core::language::dl</span>,
     <span class="ident">provider::text_document::document_symbol</span>::{<span class="ident">symbol_range</span>, <span class="ident">Data</span>, <span class="ident">SymbolRange</span>, <span class="ident">Work</span>},
@@ -217,21 +205,10 @@
 
 <span class="comment">// Document symbol provider definitions for &quot;.dl&quot; files.</span>
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">document_symbol</span>(
+    <span class="ident">content</span>: <span class="kw-2">&amp;</span><span class="ident">ropey::Rope</span>,
     <span class="ident">tree</span>: <span class="kw-2">&amp;</span><span class="ident">tree_sitter::Tree</span>,
     <span class="ident">params</span>: <span class="ident">lsp::DocumentSymbolParams</span>,
-    <span class="ident">content</span>: <span class="kw-2">&amp;</span><span class="ident">ropey::Rope</span>,
 ) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">lsp::SymbolInformation</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="comment">// Prepare the syntax tree.</span>
-    <span class="kw">let</span> <span class="ident">uri</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">params</span>.<span class="ident">text_document</span>.<span class="ident">uri</span>;
-    <span class="comment">// let tree = session.get_tree(uri).await?.clone().await.ok_or_else(|| {</span>
-    <span class="comment">//     anyhow::anyhow!(</span>
-    <span class="comment">//         &quot;could not resolve previous tree for uri: {:#?}&quot;,</span>
-    <span class="comment">//         params.text_document.uri</span>
-    <span class="comment">//     )</span>
-    <span class="comment">// })?;</span>
-    <span class="comment">// let tree = tree.lock().await;</span>
-    <span class="kw">let</span> <span class="ident">node</span> <span class="op">=</span> <span class="ident">tree</span>.<span class="ident">root_node</span>();
-
     <span class="comment">// Vector to collect document symbols into as they are constructed.</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">syms</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">lsp::SymbolInformation</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
 
@@ -239,7 +216,7 @@
     <span class="comment">//   data: contains data for constructing upcoming DocumentSymbols</span>
     <span class="comment">//   work: contains remaining tree_sitter nodes to process</span>
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">data</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Data</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[];
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">work</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Work</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">Work::Node</span>(<span class="ident">node</span>)];
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">work</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Work</span><span class="op">&gt;</span> <span class="op">=</span> <span class="macro">vec!</span>[<span class="ident">Work::Node</span>(<span class="ident">tree</span>.<span class="ident">root_node</span>())];
 
     <span class="comment">// The stack machine work loop.</span>
     <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span> <span class="ident">work</span>.<span class="ident">pop</span>() {
@@ -250,8 +227,7 @@
                     <span class="ident">node</span>, <span class="ident">kind</span>, <span class="ident">name_hint</span>, ..
                 }) <span class="op">=</span> <span class="ident">data</span>.<span class="ident">pop</span>()
                 {
-                    <span class="kw">let</span> <span class="ident">SymbolRange</span> { <span class="ident">name</span>, <span class="ident">range</span>, .. } <span class="op">=</span>
-                        { <span class="ident">symbol_range</span>(<span class="ident">content</span>, <span class="ident">node</span>, <span class="ident">name_hint</span>, <span class="ident">dl::field::IDENTIFIER</span>) };
+                    <span class="kw">let</span> <span class="ident">SymbolRange</span> { <span class="ident">name</span>, <span class="ident">range</span>, .. } <span class="op">=</span> <span class="ident">symbol_range</span>(<span class="ident">content</span>, <span class="ident">node</span>, <span class="ident">name_hint</span>, <span class="ident">dl::field::IDENTIFIER</span>);
 
                     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
                     <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="ident">lsp::SymbolInformation</span> {
@@ -260,7 +236,7 @@
                         <span class="ident">tags</span>: <span class="ident">Default::default</span>(),
                         <span class="ident">deprecated</span>: <span class="ident">Default::default</span>(),
                         <span class="ident">location</span>: <span class="ident">lsp::Location</span> {
-                            <span class="ident">uri</span>: <span class="ident">uri</span>.<span class="ident">clone</span>(),
+                            <span class="ident">uri</span>: <span class="ident">params</span>.<span class="ident">text_document</span>.<span class="ident">uri</span>.<span class="ident">clone</span>(),
                             <span class="ident">range</span>,
                         },
                         <span class="ident">container_name</span>: <span class="ident">Default::default</span>(),

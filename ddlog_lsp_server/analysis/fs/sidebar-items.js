@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["workspace_documents_paths",""]]});
+initSidebarItems({"fn":[["documents_within_folder",""]]});

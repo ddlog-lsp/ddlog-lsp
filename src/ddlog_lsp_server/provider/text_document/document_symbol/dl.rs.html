@@ -23,11 +23,11 @@
 
 <span class="comment">// Document symbol provider definitions for &quot;.dl&quot; files.</span>
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">document_symbol</span>(
+    <span class="ident">content</span>: <span class="kw-2">&amp;</span><span class="ident">ropey::Rope</span>,
     <span class="ident">tree</span>: <span class="kw-2">&amp;</span><span class="ident">tree_sitter::Tree</span>,
     <span class="ident">params</span>: <span class="ident">lsp::DocumentSymbolParams</span>,
-    <span class="ident">content</span>: <span class="kw-2">&amp;</span><span class="ident">ropey::Rope</span>,
 ) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">lsp::DocumentSymbolResponse</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::provider::common::document_symbol::dl::document_symbol</span>(<span class="ident">tree</span>, <span class="ident">params</span>, <span class="ident">content</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::provider::common::document_symbol::dl::document_symbol</span>(<span class="ident">content</span>, <span class="ident">tree</span>, <span class="ident">params</span>).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">lsp::DocumentSymbolResponse::Flat</span>(<span class="ident">result</span>);
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">result</span>);
     <span class="prelude-val">Ok</span>(<span class="ident">result</span>)

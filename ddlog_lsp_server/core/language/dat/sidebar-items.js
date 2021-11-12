@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["field",""],["keyword",""],["kind",""],["symbol",""],["visit",""]],"struct":[["TrivialVisitor",""]],"trait":[["Visitor",""]]});
+initSidebarItems({"mod":[["field",""],["keyword",""],["kind",""],["symbol",""],["visitor",""]]});
