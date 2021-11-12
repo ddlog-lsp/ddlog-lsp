@@ -5,9 +5,9 @@ use crate::{
 
 // Document symbol provider definitions for ".dl" files.
 pub async fn document_symbol(
+    content: &ropey::Rope,
     tree: &tree_sitter::Tree,
     params: lsp::DocumentSymbolParams,
-    content: &ropey::Rope,
 ) -> anyhow::Result<Vec<lsp::SymbolInformation>> {
     // Prepare the syntax tree.
     let uri = &params.text_document.uri;

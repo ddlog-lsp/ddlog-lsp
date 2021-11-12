@@ -9,8 +9,8 @@ pub async fn document_symbol(
     // let text = session.get_text(&params.text_document.uri).await?;
     let content = text.get_content().await?;
     let response = match text.language {
-        crate::core::Language::DDlogDat => self::dat::document_symbol(tree, params, &content).await?,
-        crate::core::Language::DDlogDl => self::dl::document_symbol(tree, params, &content).await?,
+        crate::core::Language::DDlogDat => self::dat::document_symbol(&content, tree, params).await?,
+        crate::core::Language::DDlogDl => self::dl::document_symbol(&content, tree, params).await?,
     };
     Ok(response)
 }

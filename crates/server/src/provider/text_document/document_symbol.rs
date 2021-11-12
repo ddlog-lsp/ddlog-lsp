@@ -79,8 +79,8 @@ pub async fn document_symbol(
         .ok_or_else(|| anyhow::anyhow!("could not open tree for uri: {:#?}", params.text_document.uri))?;
     let tree = tree.lock().await;
     let response = match text.language {
-        crate::core::Language::DDlogDat => self::dat::document_symbol(&tree, params, &content).await?,
-        crate::core::Language::DDlogDl => self::dl::document_symbol(&tree, params, &content).await?,
+        crate::core::Language::DDlogDat => self::dat::document_symbol(&content, &tree, params).await?,
+        crate::core::Language::DDlogDl => self::dl::document_symbol(&content, &tree, params).await?,
     };
     Ok(response)
 }
