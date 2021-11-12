@@ -28,7 +28,6 @@ pub async fn document_symbol(
                 }) = data.pop()
                 {
                     let SymbolRange { name, range, .. } = symbol_range(content, node, name_hint, dl::field::IDENTIFIER);
-
                     #[allow(deprecated)]
                     let this = lsp::SymbolInformation {
                         name: name.to_string(),
@@ -49,7 +48,7 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let annotated_items = node
                     .children(&mut cursor)
-                    .filter(|it| [dl::kind::ANNOTATED_ITEM].contains(&it.kind_id()))
+                    .filter(|child_node| [dl::kind::ANNOTATED_ITEM].contains(&child_node.kind_id()))
                     .map(Work::Node);
                 work.extend(annotated_items);
             },
@@ -58,7 +57,7 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let items = node
                     .children(&mut cursor)
-                    .filter(|it| [dl::kind::ITEM].contains(&it.kind_id()))
+                    .filter(|child_node| [dl::kind::ITEM].contains(&child_node.kind_id()))
                     .map(Work::Node);
                 work.extend(items);
             },
@@ -67,7 +66,9 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let items = node
                     .children(&mut cursor)
-                    .filter(|it| [dl::kind::FUNCTION_EXTERN, dl::kind::FUNCTION_NORMAL].contains(&it.kind_id()))
+                    .filter(|child_node| {
+                        [dl::kind::FUNCTION_EXTERN, dl::kind::FUNCTION_NORMAL].contains(&child_node.kind_id())
+                    })
                     .map(Work::Node);
                 work.extend(items);
             },
@@ -106,7 +107,7 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let items = node
                     .children(&mut cursor)
-                    .filter(|it| {
+                    .filter(|child_node| {
                         [
                             dl::kind::APPLY,
                             dl::kind::FUNCTION,
@@ -115,7 +116,7 @@ pub async fn document_symbol(
                             dl::kind::TRANSFORMER,
                             dl::kind::TYPEDEF,
                         ]
-                        .contains(&it.kind_id())
+                        .contains(&child_node.kind_id())
                     })
                     .map(Work::Node);
                 work.extend(items);
@@ -125,7 +126,7 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let items = node
                     .children(&mut cursor)
-                    .filter(|it| [dl::kind::REL_ARGS, dl::kind::REL_ELEM].contains(&it.kind_id()))
+                    .filter(|child_node| [dl::kind::REL_ARGS, dl::kind::REL_ELEM].contains(&child_node.kind_id()))
                     .map(Work::Node);
                 work.extend(items);
             },
@@ -164,7 +165,9 @@ pub async fn document_symbol(
                 let mut cursor = node.walk();
                 let items = node
                     .children(&mut cursor)
-                    .filter(|it| [dl::kind::TYPEDEF_EXTERN, dl::kind::TYPEDEF_NORMAL].contains(&it.kind_id()))
+                    .filter(|child_node| {
+                        [dl::kind::TYPEDEF_EXTERN, dl::kind::TYPEDEF_NORMAL].contains(&child_node.kind_id())
+                    })
                     .map(Work::Node);
                 work.extend(items);
             },
