@@ -1,11 +1,11 @@
-use crate::core::language::dl::{TrivialVisitor, Visitor};
+use crate::core::language::dl::visitor::{validating::ValidatingVisitor, Visitor};
 
 pub fn diagnostics(tree: &tree_sitter::Tree, uri: &lsp::Url, content: &ropey::Rope) -> Vec<lsp::Diagnostic> {
     let mut diagnostics = vec![];
     let mut visitor = {
         let language = crate::core::Language::DDlogDl;
         let node = tree.root_node();
-        TrivialVisitor::new(language, node)
+        ValidatingVisitor::new(language, node)
     };
     let result = visitor.visit();
 
