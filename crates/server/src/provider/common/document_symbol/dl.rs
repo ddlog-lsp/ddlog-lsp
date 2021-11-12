@@ -38,8 +38,7 @@ pub async fn document_symbol(
                     node, kind, name_hint, ..
                 }) = data.pop()
                 {
-                    let SymbolRange { name, range, .. } =
-                        { symbol_range(content, node, name_hint, dl::field::IDENTIFIER) };
+                    let SymbolRange { name, range, .. } = symbol_range(content, node, name_hint, dl::field::IDENTIFIER);
 
                     #[allow(deprecated)]
                     let this = lsp::SymbolInformation {
