@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{borrow::Borrow, sync::Arc};
 
 pub async fn did_change_workspace_folders(
     session: Arc<crate::core::Session>,
@@ -16,7 +16,9 @@ pub async fn symbol(
     let query_patterns = params.query.split(' ').collect::<Vec<_>>();
     let mut results = vec![];
     for item in session.document_symbols.iter() {
-        for info in item.value().clone().await.unwrap_or_default() {
+        let iterator = item.value().clone().await.unwrap_or_else(|| Arc::new(vec![]));
+        let iterator: &Vec<_> = iterator.borrow();
+        for info in iterator {
             if query_patterns
                 .iter()
                 .all(|pattern| twoway::find_str(info.name.as_str(), pattern).is_some())

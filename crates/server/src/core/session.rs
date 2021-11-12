@@ -12,6 +12,7 @@ use futures::{
     stream::{self, StreamExt},
     FutureExt,
     Stream,
+    TryFutureExt,
 };
 use std::{
     pin::Pin,
@@ -41,7 +42,7 @@ pub struct Session {
     document_texts: DashMap<lsp::Url, crate::core::Text>,
     pub document_parsers: DashMap<lsp::Url, Arc<Mutex<tree_sitter::Parser>>>,
     pub document_trees: DashMap<lsp::Url, EagerFuture<Option<Arc<Mutex<tree_sitter::Tree>>>>>,
-    pub document_symbols: DashMap<lsp::Url, EagerFuture<Option<Vec<lsp::SymbolInformation>>>>,
+    pub document_symbols: DashMap<lsp::Url, EagerFuture<Option<Arc<Vec<lsp::SymbolInformation>>>>>,
 }
 
 impl Session {
@@ -127,6 +128,7 @@ impl Session {
                         Err(anyhow::anyhow!("could not open tree for uri: {:#?}", uri.clone()))
                     }
                 }
+                .map_ok(Arc::new)
                 .map(Result::ok)
                 .eager()
                 .flatten()
