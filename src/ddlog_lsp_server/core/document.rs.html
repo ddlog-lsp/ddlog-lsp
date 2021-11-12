@@ -151,9 +151,6 @@
 <span id="151">151</span>
 <span id="152">152</span>
 <span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::future</span>::{<span class="ident">EagerFuture</span>, <span class="ident">EagerFutureExt</span>};
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">future</span>, <span class="ident">FutureExt</span>, <span class="ident">TryFutureExt</span>};
 <span class="kw">use</span> <span class="ident">lsp_text</span>::{<span class="ident">RopeExt</span>, <span class="ident">TextEdit</span>};
@@ -298,10 +295,7 @@
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">text</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::core::Text</span> {
-        <span class="ident"><span class="kw">crate</span>::core::Text</span> {
-            <span class="ident">language</span>: <span class="self">self</span>.<span class="ident">language</span>,
-            <span class="ident">content</span>: <span class="self">self</span>.<span class="ident">content</span>.<span class="ident">clone</span>(),
-        }
+        <span class="ident"><span class="kw">crate</span>::core::Text::new</span>(<span class="self">self</span>.<span class="ident">language</span>, <span class="self">self</span>.<span class="ident">content</span>.<span class="ident">clone</span>())
     }
 }
 

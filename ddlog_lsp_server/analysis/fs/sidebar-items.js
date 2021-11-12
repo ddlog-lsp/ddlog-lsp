@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["workspace_documents_paths",""]]});

@@ -15,21 +15,39 @@
 <span id="15">15</span>
 <span id="16">16</span>
 <span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::core::future::EagerFuture</span>;
 <span class="kw">use</span> <span class="ident">futures::future::Future</span>;
 <span class="kw">use</span> <span class="ident">std::convert::TryInto</span>;
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Text</span> {
     <span class="kw">pub</span> <span class="ident">language</span>: <span class="ident"><span class="kw">crate</span>::core::Language</span>,
-    <span class="kw">pub</span> <span class="ident">content</span>: <span class="ident">EagerFuture</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ropey::Rope</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">content</span>: <span class="ident">EagerFuture</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ropey::Rope</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Text</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">language_id</span>: <span class="kw">impl</span> <span class="ident">TryInto</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::core::Language</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">anyhow::Error</span><span class="op">&gt;</span>,
-        <span class="ident">text</span>: <span class="kw">impl</span> <span class="ident">Future</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    ) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="macro">todo!</span>()
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">language</span>: <span class="ident"><span class="kw">crate</span>::core::Language</span>, <span class="ident">content</span>: <span class="ident">EagerFuture</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ropey::Rope</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">language</span>, <span class="ident">content</span> }
+    }
+
+    <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_content</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="ident">ropey::Rope</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">content</span>
+            .<span class="ident">clone</span>()
+            .<span class="kw">await</span>
+            .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">anyhow::anyhow!</span>(<span class="string">&quot;could not resolve text content&quot;</span>))
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_content</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">content</span>: <span class="ident">EagerFuture</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ropey::Rope</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
+        <span class="self">self</span>.<span class="ident">content</span> <span class="op">=</span> <span class="ident">content</span>;
     }
 }
 </code></pre></div>

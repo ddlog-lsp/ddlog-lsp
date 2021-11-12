@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["text_document",""],["workspace",""]]});
+initSidebarItems({"mod":[["common",""],["text_document",""],["workspace",""]]});

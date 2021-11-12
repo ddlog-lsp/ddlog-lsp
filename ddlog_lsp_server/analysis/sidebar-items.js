@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["document_symbol",""]]});
+initSidebarItems({"mod":[["fs",""]]});

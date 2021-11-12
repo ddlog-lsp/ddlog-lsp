@@ -5,12 +5,8 @@
 <span id="5">5</span>
 <span id="6">6</span>
 <span id="7">7</span>
-<span id="8">8</span>
-<span id="9">9</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
-
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">document_symbol</span>(
-    <span class="ident">_session</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::core::Session</span><span class="op">&gt;</span>,
+</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">document_symbol</span>(
+    <span class="ident">_tree</span>: <span class="kw-2">&amp;</span><span class="ident">tree_sitter::Tree</span>,
     <span class="ident">_params</span>: <span class="ident">lsp::DocumentSymbolParams</span>,
     <span class="ident">_content</span>: <span class="kw-2">&amp;</span><span class="ident">ropey::Rope</span>,
 ) -&gt; <span class="ident">anyhow::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">lsp::DocumentSymbolResponse</span><span class="op">&gt;</span><span class="op">&gt;</span> {
