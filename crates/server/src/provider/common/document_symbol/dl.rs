@@ -9,10 +9,6 @@ pub async fn document_symbol(
     tree: &tree_sitter::Tree,
     params: lsp::DocumentSymbolParams,
 ) -> anyhow::Result<Vec<lsp::SymbolInformation>> {
-    // Prepare the syntax tree.
-    let uri = &params.text_document.uri;
-    let node = tree.root_node();
-
     // Vector to collect document symbols into as they are constructed.
     let mut syms: Vec<lsp::SymbolInformation> = vec![];
 
@@ -20,7 +16,7 @@ pub async fn document_symbol(
     //   data: contains data for constructing upcoming DocumentSymbols
     //   work: contains remaining tree_sitter nodes to process
     let mut data: Vec<Data> = vec![];
-    let mut work: Vec<Work> = vec![Work::Node(node)];
+    let mut work: Vec<Work> = vec![Work::Node(tree.root_node())];
 
     // The stack machine work loop.
     while let Some(next) = work.pop() {
@@ -40,7 +36,7 @@ pub async fn document_symbol(
                         tags: Default::default(),
                         deprecated: Default::default(),
                         location: lsp::Location {
-                            uri: uri.clone(),
+                            uri: params.text_document.uri.clone(),
                             range,
                         },
                         container_name: Default::default(),
