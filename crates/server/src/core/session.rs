@@ -264,7 +264,11 @@ impl Session {
     }
 
     async fn collect_workspace_document_uris(&self, workspace_folder: &lsp::WorkspaceFolder) -> DashSet<lsp::Url> {
-        crate::analysis::fs::workspace_documents_paths(workspace_folder)
+        let folder = workspace_folder
+            .uri
+            .to_file_path()
+            .expect("valid workspace paths should always resolve to file paths");
+        crate::analysis::fs::documents_within_folder(folder)
             .map(|path| lsp::Url::from_file_path(path).expect("valid file paths should always parse as URLs"))
             .collect::<DashSet<lsp::Url>>()
             .await

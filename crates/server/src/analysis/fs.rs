@@ -3,13 +3,10 @@ use futures::{
     stream::{self, StreamExt},
     Stream,
 };
+use std::path::PathBuf;
 
-pub fn workspace_documents_paths(workspace_folder: &lsp::WorkspaceFolder) -> impl Stream<Item = std::path::PathBuf> {
-    let init_path = workspace_folder
-        .uri
-        .to_file_path()
-        .expect("valid workspace paths should always resolve to file paths");
-    let init = vec![init_path];
+pub fn documents_within_folder(folder: PathBuf) -> impl Stream<Item = std::path::PathBuf> {
+    let init = vec![folder];
     let f = |mut work: Vec<std::path::PathBuf>| async move {
         while let Some(path) = work.pop() {
             if path.is_dir() {
