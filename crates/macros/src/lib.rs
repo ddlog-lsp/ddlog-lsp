@@ -104,7 +104,9 @@ pub fn field_ids(input: TokenStream) -> TokenStream {
     for field in macro_input.fields {
         let ident = field.ident;
         let name = field.name.as_str();
-        let value = language.field_id_for_name(name).expect("field does not exist");
+        let value = language
+            .field_id_for_name(name)
+            .unwrap_or_else(|| panic!("field does not exist: {:#?}", name));
         let item = quote! {
             pub const #ident: u16 = #value;
         };
