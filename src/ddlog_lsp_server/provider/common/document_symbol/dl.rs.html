@@ -198,6 +198,9 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">core::language::dl</span>,
     <span class="ident">provider::text_document::document_symbol</span>::{<span class="ident">symbol_range</span>, <span class="ident">Data</span>, <span class="ident">SymbolRange</span>, <span class="ident">Work</span>},
@@ -228,7 +231,6 @@
                 }) <span class="op">=</span> <span class="ident">data</span>.<span class="ident">pop</span>()
                 {
                     <span class="kw">let</span> <span class="ident">SymbolRange</span> { <span class="ident">name</span>, <span class="ident">range</span>, .. } <span class="op">=</span> <span class="ident">symbol_range</span>(<span class="ident">content</span>, <span class="ident">node</span>, <span class="ident">name_hint</span>, <span class="ident">dl::field::IDENTIFIER</span>);
-
                     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
                     <span class="kw">let</span> <span class="ident">this</span> <span class="op">=</span> <span class="ident">lsp::SymbolInformation</span> {
                         <span class="ident">name</span>: <span class="ident">name</span>.<span class="ident">to_string</span>(),
@@ -249,7 +251,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">annotated_items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> [<span class="ident">dl::kind::ANNOTATED_ITEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>()))
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> [<span class="ident">dl::kind::ANNOTATED_ITEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>()))
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">annotated_items</span>);
             },
@@ -258,7 +260,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> [<span class="ident">dl::kind::ITEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>()))
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> [<span class="ident">dl::kind::ITEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>()))
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">items</span>);
             },
@@ -267,7 +269,9 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> [<span class="ident">dl::kind::FUNCTION_EXTERN</span>, <span class="ident">dl::kind::FUNCTION_NORMAL</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>()))
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> {
+                        [<span class="ident">dl::kind::FUNCTION_EXTERN</span>, <span class="ident">dl::kind::FUNCTION_NORMAL</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>())
+                    })
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">items</span>);
             },
@@ -306,7 +310,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> {
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> {
                         [
                             <span class="ident">dl::kind::APPLY</span>,
                             <span class="ident">dl::kind::FUNCTION</span>,
@@ -315,7 +319,7 @@
                             <span class="ident">dl::kind::TRANSFORMER</span>,
                             <span class="ident">dl::kind::TYPEDEF</span>,
                         ]
-                        .<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>())
+                        .<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>())
                     })
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">items</span>);
@@ -325,7 +329,7 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> [<span class="ident">dl::kind::REL_ARGS</span>, <span class="ident">dl::kind::REL_ELEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>()))
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> [<span class="ident">dl::kind::REL_ARGS</span>, <span class="ident">dl::kind::REL_ELEM</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>()))
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">items</span>);
             },
@@ -364,7 +368,9 @@
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cursor</span> <span class="op">=</span> <span class="ident">node</span>.<span class="ident">walk</span>();
                 <span class="kw">let</span> <span class="ident">items</span> <span class="op">=</span> <span class="ident">node</span>
                     .<span class="ident">children</span>(<span class="kw-2">&amp;mut</span> <span class="ident">cursor</span>)
-                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">it</span><span class="op">|</span> [<span class="ident">dl::kind::TYPEDEF_EXTERN</span>, <span class="ident">dl::kind::TYPEDEF_NORMAL</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">it</span>.<span class="ident">kind_id</span>()))
+                    .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">child_node</span><span class="op">|</span> {
+                        [<span class="ident">dl::kind::TYPEDEF_EXTERN</span>, <span class="ident">dl::kind::TYPEDEF_NORMAL</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">child_node</span>.<span class="ident">kind_id</span>())
+                    })
                     .<span class="ident">map</span>(<span class="ident">Work::Node</span>);
                 <span class="ident">work</span>.<span class="ident">extend</span>(<span class="ident">items</span>);
             },

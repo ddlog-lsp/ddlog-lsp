@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["IDENTIFIER",""]]});
+initSidebarItems({"constant":[["IDENTIFIER",""],["MODULE_ALIAS",""],["MODULE_PATH",""]]});
