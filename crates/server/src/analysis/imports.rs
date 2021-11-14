@@ -36,6 +36,7 @@ impl Import {
     }
 }
 
+// TODO: consider rewriting using tree-sitter queries
 pub fn collect_imports(content: &ropey::Rope, tree: &tree_sitter::Tree) -> Vec<Import> {
     vec![tree.root_node()]
         .into_iter()
