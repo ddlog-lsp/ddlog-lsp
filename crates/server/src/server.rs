@@ -14,6 +14,10 @@ impl Server {
 }
 
 pub fn capabilities() -> lsp::ServerCapabilities {
+    let definition_provider = Some(lsp::OneOf::Right(lsp::DefinitionOptions {
+        work_done_progress_options: Default::default(),
+    }));
+
     let document_symbol_provider = Some(lsp::OneOf::Left(true));
 
     let text_document_sync = {
@@ -45,6 +49,7 @@ pub fn capabilities() -> lsp::ServerCapabilities {
 
     lsp::ServerCapabilities {
         text_document_sync,
+        definition_provider,
         document_symbol_provider,
         workspace,
         workspace_symbol_provider,
@@ -77,6 +82,15 @@ impl lspower::LanguageServer for Server {
 
     async fn shutdown(&self) -> jsonrpc::Result<()> {
         Ok(())
+    }
+
+    async fn goto_definition(
+        &self,
+        params: lsp::GotoDefinitionParams,
+    ) -> jsonrpc::Result<Option<lsp::GotoDefinitionResponse>> {
+        let session = self.session.clone();
+        let result = crate::handler::text_document::definition(session, params).await;
+        Ok(result.map_err(crate::core::IntoJsonRpcError)?)
     }
 
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {

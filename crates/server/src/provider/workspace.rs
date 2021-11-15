@@ -16,9 +16,9 @@ pub async fn symbol(
     let query_patterns = params.query.split(' ').collect::<Vec<_>>();
     let mut results = vec![];
     for item in session.document_symbols.iter() {
-        if let Some(iterator) = item.value().clone().await {
-            let iterator: &Vec<_> = iterator.borrow();
-            for info in iterator {
+        if let Some(symbols) = item.value().clone().await {
+            let symbols: &Vec<_> = symbols.borrow();
+            for info in symbols {
                 if query_patterns
                     .iter()
                     .all(|pattern| twoway::find_str(info.name.as_str(), pattern).is_some())

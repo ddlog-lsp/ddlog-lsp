@@ -4,14 +4,13 @@ use lsp_text::RopeExt;
 #[derive(Clone, Debug)]
 pub struct ModulePath {
     components: Vec<String>,
-
 }
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Import {
-    module_path: ModulePath,
-    module_alias: Option<String>,
+    pub module_path: ModulePath,
+    pub module_alias: Option<String>,
 }
 
 impl Import {
@@ -41,8 +40,8 @@ impl Import {
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct ResolvedImport {
-    import: Import,
-    uri: lsp::Url,
+    pub import: Import,
+    pub uri: lsp::Url,
 }
 
 // TODO: consider rewriting using tree-sitter queries
@@ -70,12 +69,10 @@ pub fn collect_imports<'a>(content: &'a ropey::Rope, tree: &'a tree_sitter::Tree
 
 pub fn resolve_import(base: lsp::Url) -> impl Fn(Import) -> ResolvedImport {
     move |import| {
-        let mut uri = base.clone();
-        for component in &import.module_path.components {
-            uri = uri
-                .join(component)
-                .unwrap_or_else(|err| panic!("error parsing import path component: {}", err));
-        }
+        let suffix = format!("{}.dl", import.module_path.components.join("/"));
+        let uri = base
+            .join(&suffix)
+            .unwrap_or_else(|err| panic!("error parsing import path component: {}", err));
         ResolvedImport { import, uri }
     }
 }
