@@ -79,6 +79,15 @@ impl lspower::LanguageServer for Server {
         Ok(())
     }
 
+    async fn goto_definition(
+        &self,
+        params: lsp::GotoDefinitionParams,
+    ) -> jsonrpc::Result<Option<lsp::GotoDefinitionResponse>> {
+        let session = self.session.clone();
+        let result = crate::handler::text_document::definition(session, params).await;
+        Ok(result.map_err(crate::core::IntoJsonRpcError)?)
+    }
+
     async fn did_open(&self, params: lsp::DidOpenTextDocumentParams) {
         let session = self.session.clone();
         crate::handler::text_document::did_open(session, params).await.unwrap()

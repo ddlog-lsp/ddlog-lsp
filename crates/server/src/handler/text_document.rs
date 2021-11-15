@@ -3,6 +3,13 @@ use futures::future;
 use lsp_text::RopeExt;
 use std::sync::Arc;
 
+pub async fn definition(
+    session: Arc<crate::core::Session>,
+    params: lsp::GotoDefinitionParams,
+) -> anyhow::Result<Option<lsp::GotoDefinitionResponse>> {
+    crate::provider::text_document::definition(session, params).await
+}
+
 pub async fn did_change(
     session: Arc<crate::core::Session>,
     params: lsp::DidChangeTextDocumentParams,
