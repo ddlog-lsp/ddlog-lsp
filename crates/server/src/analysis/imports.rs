@@ -4,8 +4,10 @@ use lsp_text::RopeExt;
 #[derive(Clone, Debug)]
 pub struct ModulePath {
     components: Vec<String>,
+
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct Import {
     module_path: ModulePath,
@@ -36,8 +38,15 @@ impl Import {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Clone, Debug)]
+pub struct ResolvedImport {
+    import: Import,
+    uri: lsp::Url,
+}
+
 // TODO: consider rewriting using tree-sitter queries
-pub fn collect_imports(content: &ropey::Rope, tree: &tree_sitter::Tree) -> Vec<Import> {
+pub fn collect_imports<'a>(content: &'a ropey::Rope, tree: &'a tree_sitter::Tree) -> impl Iterator<Item = Import> + 'a {
     vec![tree.root_node()]
         .into_iter()
         .flat_map(|root| {
@@ -57,5 +66,18 @@ pub fn collect_imports(content: &ropey::Rope, tree: &tree_sitter::Tree) -> Vec<I
                 .collect::<Vec<_>>()
         })
         .map(|node| Import::new(content, node))
-        .collect()
 }
+
+pub fn resolve_import(base: lsp::Url) -> impl Fn(Import) -> ResolvedImport {
+    move |import| {
+        let mut uri = base.clone();
+        for component in &import.module_path.components {
+            uri = uri
+                .join(component)
+                .unwrap_or_else(|err| panic!("error parsing import path component: {}", err));
+        }
+        ResolvedImport { import, uri }
+    }
+}
+
+// FIXME: function to convert resolve imports to uris
