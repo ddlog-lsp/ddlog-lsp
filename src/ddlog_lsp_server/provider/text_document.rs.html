@@ -3,9 +3,13 @@
 <span id="3">3</span>
 <span id="4">4</span>
 <span id="5">5</span>
-</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">diagnostics</span>;
+<span id="6">6</span>
+<span id="7">7</span>
+</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">definition</span>;
+<span class="kw">mod</span> <span class="ident">diagnostics</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">document_symbol</span>;
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">definition::definition</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">diagnostics</span>::<span class="kw-2">*</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">document_symbol::document_symbol</span>;
 </code></pre></div>

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["fs",""],["imports",""]]});
+initSidebarItems({"mod":[["fs",""],["imports",""],["symbol",""]]});

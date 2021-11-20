@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["collect_imports",""]],"struct":[["Import",""],["ModulePath",""]]});
+initSidebarItems({"fn":[["collect_imports",""],["resolve_import",""]],"struct":[["Import",""],["ModulePath",""],["ResolvedImport",""]]});

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["did_change",""],["did_close",""],["did_open",""],["document_symbol",""]]});
+initSidebarItems({"fn":[["definition",""],["did_change",""],["did_close",""],["did_open",""],["document_symbol",""]]});

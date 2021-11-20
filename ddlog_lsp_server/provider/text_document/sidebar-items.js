@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["diagnostics",""]],"mod":[["document_symbol",""]]});
+initSidebarItems({"fn":[["definition",""],["diagnostics",""]],"mod":[["document_symbol",""]]});
