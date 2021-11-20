@@ -74,8 +74,8 @@ pub async fn definition(
                 let link = {
                     let origin_selection_range = Some(content.tree_sitter_range_to_lsp_range(node.range()));
                     let target_uri = candidate.location.uri.clone();
-                    let target_range = candidate.location.range.clone();
-                    let target_selection_range = candidate.location.range.clone();
+                    let target_range = candidate.location.range;
+                    let target_selection_range = candidate.location.range;
                     lsp::LocationLink {
                         origin_selection_range,
                         target_uri,
