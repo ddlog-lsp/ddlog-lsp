@@ -78,7 +78,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Function,
+                    kind: lsp::SymbolKind::FUNCTION,
                     name_hint: "function",
                 });
             },
@@ -88,7 +88,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Function,
+                    kind: lsp::SymbolKind::FUNCTION,
                     name_hint: "function",
                 });
             },
@@ -98,7 +98,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "index",
                 });
             },
@@ -136,7 +136,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "rel",
                 });
             },
@@ -146,7 +146,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "rel",
                 });
             },
@@ -156,7 +156,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "transformer",
                 });
             },
@@ -177,7 +177,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "typedef",
                 });
             },
@@ -187,7 +187,7 @@ pub async fn document_symbol(
                 data.push(Data {
                     node,
                     children_count: 0,
-                    kind: lsp::SymbolKind::Unknown,
+                    kind: lsp::SymbolKind::NULL,
                     name_hint: "typedef",
                 });
             },

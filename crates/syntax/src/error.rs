@@ -75,7 +75,7 @@ impl<D> SyntaxError<D> {
     #[allow(clippy::field_reassign_with_default)]
     pub fn to_lsp_diagnostic(&self, uri: &lsp::Url, content: &ropey::Rope) -> lsp::Diagnostic {
         let range = content.tree_sitter_range_to_lsp_range(self.range);
-        let severity = Some(lsp::DiagnosticSeverity::Error);
+        let severity = Some(lsp::DiagnosticSeverity::ERROR);
         match &self.r#type {
             SyntaxErrorType::ChoiceError { language, choices } => {
                 let language: tree_sitter::Language = (*language).into();

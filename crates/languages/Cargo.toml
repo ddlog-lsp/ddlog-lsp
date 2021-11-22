@@ -24,18 +24,18 @@ thiserror = "1.0"
 
 [dependencies.tree-sitter]
 package = "tree-sitter-facade"
-version = "0.1"
+version = "0.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.tree-sitter-sys]
 package = "tree-sitter"
 version = "0.20"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = { version = "=0.2.77", features = ["strict-macro"] }
+wasm-bindgen = { version = "=0.2.78", features = ["strict-macro"] }
 wasm-bindgen-futures = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.futures]
 version = "0.3"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies.web-tree-sitter-sys]
-version = "0.3"
+version = "0.4"

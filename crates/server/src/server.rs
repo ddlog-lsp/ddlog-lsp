@@ -23,7 +23,7 @@ pub fn capabilities() -> lsp::ServerCapabilities {
     let text_document_sync = {
         let options = lsp::TextDocumentSyncOptions {
             open_close: Some(true),
-            change: Some(lsp::TextDocumentSyncKind::Incremental),
+            change: Some(lsp::TextDocumentSyncKind::INCREMENTAL),
             ..Default::default()
         };
         Some(lsp::TextDocumentSyncCapability::Options(options))
@@ -75,7 +75,7 @@ impl lspower::LanguageServer for Server {
     }
 
     async fn initialized(&self, _: lsp::InitializedParams) {
-        let typ = lsp::MessageType::Info;
+        let typ = lsp::MessageType::INFO;
         let message = "DDlog language server initialized!";
         self.client.log_message(typ, message).await;
     }
