@@ -156,7 +156,7 @@
     <span class="kw">let</span> <span class="ident">text_document_sync</span> <span class="op">=</span> {
         <span class="kw">let</span> <span class="ident">options</span> <span class="op">=</span> <span class="ident">lsp::TextDocumentSyncOptions</span> {
             <span class="ident">open_close</span>: <span class="prelude-val">Some</span>(<span class="bool-val">true</span>),
-            <span class="ident">change</span>: <span class="prelude-val">Some</span>(<span class="ident">lsp::TextDocumentSyncKind::Incremental</span>),
+            <span class="ident">change</span>: <span class="prelude-val">Some</span>(<span class="ident">lsp::TextDocumentSyncKind::INCREMENTAL</span>),
             ..<span class="ident">Default::default</span>()
         };
         <span class="prelude-val">Some</span>(<span class="ident">lsp::TextDocumentSyncCapability::Options</span>(<span class="ident">options</span>))
@@ -208,7 +208,7 @@
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">initialized</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="ident">lsp::InitializedParams</span>) {
-        <span class="kw">let</span> <span class="ident">typ</span> <span class="op">=</span> <span class="ident">lsp::MessageType::Info</span>;
+        <span class="kw">let</span> <span class="ident">typ</span> <span class="op">=</span> <span class="ident">lsp::MessageType::INFO</span>;
         <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="string">&quot;DDlog language server initialized!&quot;</span>;
         <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">log_message</span>(<span class="ident">typ</span>, <span class="ident">message</span>).<span class="kw">await</span>;
     }
