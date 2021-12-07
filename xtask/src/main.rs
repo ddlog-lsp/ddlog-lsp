@@ -486,12 +486,25 @@ FLAGS:
             return Ok(());
         }
 
+        let with_corpus = args.contains("--with-corpus");
+
+        crate::util::handle_unused(args)?;
+
         // initialize "vendor/tree-sitter-ddlog" submodule
         let submodule = Path::new("vendor/tree-sitter-ddlog").to_str().unwrap();
         let mut cmd = Command::new("git");
         cmd.current_dir(metadata::project_root());
         cmd.args(&["submodule", "update", "--init", "--depth", "1", "--", submodule]);
         cmd.status()?;
+
+        if with_corpus {
+            // initialize "vendor/corpus" submodule
+            let submodule = Path::new("vendor/differential-datalog").to_str().unwrap();
+            let mut cmd = Command::new("git");
+            cmd.current_dir(metadata::project_root());
+            cmd.args(&["submodule", "update", "--init", "--depth", "1", "--", submodule]);
+            cmd.status()?;
+        }
 
         Ok(())
     }
