@@ -29,7 +29,7 @@ anyhow = "1.0"
 async-lock = { version = "2.3", optional = true }
 bytes = "1.0"
 clap = "2.33"
-dashmap = "4.0"
+dashmap = "5.0"
 ddlog-lsp-languages = { version = "0.0", path = "../languages" }
 ddlog-lsp-syntax = { version = "0.0", path = "../syntax" }
 env_logger = "0.9"
