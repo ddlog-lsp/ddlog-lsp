@@ -42,7 +42,7 @@ pin-project-lite = "0.2"
 ropey = "1.2"
 serde_json = "1.0"
 thiserror = "1.0"
-tokio = { version = "1.0", features = ["fs", "io-std", "sync"], optional = true }
+tokio = { version = "1.15", features = ["fs", "io-std", "sync"], optional = true }
 tokio-stream = { version = "0.1", features = ["fs"], optional = true }
 twoway = "0.2"
 
@@ -59,7 +59,7 @@ indoc = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 goldenfile = "1.0"
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.15", features = ["macros", "rt-multi-thread"] }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-futures = "0.4"
