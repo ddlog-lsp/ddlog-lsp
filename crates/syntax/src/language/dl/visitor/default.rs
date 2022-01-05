@@ -1859,11 +1859,9 @@ where
     utils::seq((
         Vis::visit_atom,
         utils::repeat(utils::seq((utils::token(symbol::COMMA), Vis::visit_atom))),
-        utils::optional(utils::seq((
-            utils::token(symbol::COLON_HYPHEN_MINUS),
-            Vis::visit_rhs,
-            utils::repeat(utils::seq((utils::token(symbol::COMMA), Vis::visit_rhs))),
-        ))),
+        utils::token(symbol::COLON_HYPHEN_MINUS),
+        Vis::visit_rhs,
+        utils::repeat(utils::seq((utils::token(symbol::COMMA), Vis::visit_rhs))),
         Vis::visit_rule_end,
     ))(visitor, NodeMove::Step)
 }
