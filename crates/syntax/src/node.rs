@@ -17,9 +17,7 @@ impl<'tree> NodeExt<'tree> for tree_sitter::Node<'tree> {
     }
 
     fn next(&self) -> Option<tree_sitter::Node<'tree>> {
-        let mut next;
-
-        next = self.first_child();
+        let mut next = self.first_child();
 
         if next.is_none() {
             next = self.next_sibling();
@@ -35,7 +33,7 @@ impl<'tree> NodeExt<'tree> for tree_sitter::Node<'tree> {
         let mut next = Some(*self);
 
         loop {
-            next = next.map(|node| node.parent()).flatten();
+            next = next.and_then(|node| node.parent());
             if let Some(parent) = next {
                 if let Some(parent_sibling) = parent.next_sibling() {
                     next = Some(parent_sibling);
