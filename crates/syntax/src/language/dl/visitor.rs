@@ -392,6 +392,10 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
                     self.visit_lit_num(NodeMove::Init)?;
                     break;
                 },
+                kind::LIT_NUM_BRANCH => {
+                    self.visit_lit_num_branch(NodeMove::Init)?;
+                    break;
+                },
                 kind::LIT_NUM_BRANCH_0 => {
                     self.visit_lit_num_branch_0(NodeMove::Init)?;
                     break;
@@ -400,40 +404,32 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
                     self.visit_lit_num_branch_1(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_10 => {
-                    self.visit_lit_num_branch_10(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_2 => {
+                    self.visit_lit_num_branch_2(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_11 => {
-                    self.visit_lit_num_branch_11(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_3 => {
+                    self.visit_lit_num_branch_3(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_12 => {
-                    self.visit_lit_num_branch_12(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_4 => {
+                    self.visit_lit_num_branch_4(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_13 => {
-                    self.visit_lit_num_branch_13(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_5 => {
+                    self.visit_lit_num_branch_5(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_14 => {
-                    self.visit_lit_num_branch_14(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_6 => {
+                    self.visit_lit_num_branch_6(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_15 => {
-                    self.visit_lit_num_branch_15(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_7 => {
+                    self.visit_lit_num_branch_7(NodeMove::Init)?;
                     break;
                 },
-                kind::LIT_NUM_BRANCH_16 => {
-                    self.visit_lit_num_branch_16(NodeMove::Init)?;
-                    break;
-                },
-                kind::LIT_NUM_BRANCH_17 => {
-                    self.visit_lit_num_branch_17(NodeMove::Init)?;
-                    break;
-                },
-                kind::LIT_NUM_BRANCH_18 => {
-                    self.visit_lit_num_branch_18(NodeMove::Init)?;
+                kind::LIT_NUM_BRANCH_8 => {
+                    self.visit_lit_num_branch_8(NodeMove::Init)?;
                     break;
                 },
                 kind::LIT_NUM_BIN => {
@@ -1245,6 +1241,11 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
         default::lit_num(self, node_move)
     }
 
+    fn visit_lit_num_branch(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch");
+        default::lit_num_branch(self, node_move)
+    }
+
     fn visit_lit_num_branch_0(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
         // log::info!("visit::lit_num_branch_0");
         default::lit_num_branch_0(self, node_move)
@@ -1255,49 +1256,39 @@ pub trait Visitor<'tree>: HasWalker<'tree> {
         default::lit_num_branch_1(self, node_move)
     }
 
-    fn visit_lit_num_branch_10(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_10");
-        default::lit_num_branch_10(self, node_move)
+    fn visit_lit_num_branch_2(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_2");
+        default::lit_num_branch_2(self, node_move)
     }
 
-    fn visit_lit_num_branch_11(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_11");
-        default::lit_num_branch_11(self, node_move)
+    fn visit_lit_num_branch_3(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_3");
+        default::lit_num_branch_3(self, node_move)
     }
 
-    fn visit_lit_num_branch_12(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_12");
-        default::lit_num_branch_12(self, node_move)
+    fn visit_lit_num_branch_4(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_4");
+        default::lit_num_branch_4(self, node_move)
     }
 
-    fn visit_lit_num_branch_13(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_13");
-        default::lit_num_branch_13(self, node_move)
+    fn visit_lit_num_branch_5(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_5");
+        default::lit_num_branch_5(self, node_move)
     }
 
-    fn visit_lit_num_branch_14(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_14");
-        default::lit_num_branch_14(self, node_move)
+    fn visit_lit_num_branch_6(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_6");
+        default::lit_num_branch_6(self, node_move)
     }
 
-    fn visit_lit_num_branch_15(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_15");
-        default::lit_num_branch_15(self, node_move)
+    fn visit_lit_num_branch_7(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_7");
+        default::lit_num_branch_7(self, node_move)
     }
 
-    fn visit_lit_num_branch_16(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_16");
-        default::lit_num_branch_16(self, node_move)
-    }
-
-    fn visit_lit_num_branch_17(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_17");
-        default::lit_num_branch_17(self, node_move)
-    }
-
-    fn visit_lit_num_branch_18(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
-        // log::info!("visit::lit_num_branch_18");
-        default::lit_num_branch_18(self, node_move)
+    fn visit_lit_num_branch_8(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {
+        // log::info!("visit::lit_num_branch_8");
+        default::lit_num_branch_8(self, node_move)
     }
 
     fn visit_lit_num_bin(&mut self, node_move: NodeMove) -> Result<(), SyntaxError<()>> {

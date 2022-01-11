@@ -1165,26 +1165,12 @@ where
 {
     visitor.walker().step(kind::LIT_NUM, node_move, GotoNext::StepInto)?;
     utils::choice((
-        (kind::LIT_NUM_BRANCH_0, Vis::visit_lit_num_branch_0),
-        (kind::LIT_NUM_BRANCH_1, Vis::visit_lit_num_branch_1),
-    ))(visitor, NodeMove::Step)
-}
-
-pub fn lit_num_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
-where
-    Vis: Visitor<'tree> + ?Sized,
-{
-    visitor
-        .walker()
-        .step(kind::LIT_NUM_BRANCH_0, node_move, GotoNext::StepInto)?;
-    utils::choice((
         (kind::LIT_NUM_DEC, Vis::visit_lit_num_dec),
-        (kind::LIT_NUM_FLOAT, Vis::visit_lit_num_float),
-        (kind::LIT_NUM_HEX, Vis::visit_lit_num_hex),
+        (kind::LIT_NUM_BRANCH, Vis::visit_lit_num_branch),
     ))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_1<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
@@ -1194,106 +1180,106 @@ where
     utils::seq((
         utils::optional(Vis::visit_lit_num_dec),
         utils::choice((
-            (kind::LIT_NUM_BRANCH_10, Vis::visit_lit_num_branch_10),
-            (kind::LIT_NUM_BRANCH_11, Vis::visit_lit_num_branch_11),
-            (kind::LIT_NUM_BRANCH_12, Vis::visit_lit_num_branch_12),
-            (kind::LIT_NUM_BRANCH_13, Vis::visit_lit_num_branch_13),
-            (kind::LIT_NUM_BRANCH_14, Vis::visit_lit_num_branch_14),
-            (kind::LIT_NUM_BRANCH_15, Vis::visit_lit_num_branch_15),
-            (kind::LIT_NUM_BRANCH_16, Vis::visit_lit_num_branch_16),
-            (kind::LIT_NUM_BRANCH_17, Vis::visit_lit_num_branch_17),
-            (kind::LIT_NUM_BRANCH_18, Vis::visit_lit_num_branch_18),
+            (kind::LIT_NUM_BRANCH_0, Vis::visit_lit_num_branch_0),
+            (kind::LIT_NUM_BRANCH_1, Vis::visit_lit_num_branch_1),
+            (kind::LIT_NUM_BRANCH_2, Vis::visit_lit_num_branch_2),
+            (kind::LIT_NUM_BRANCH_3, Vis::visit_lit_num_branch_3),
+            (kind::LIT_NUM_BRANCH_4, Vis::visit_lit_num_branch_4),
+            (kind::LIT_NUM_BRANCH_5, Vis::visit_lit_num_branch_5),
+            (kind::LIT_NUM_BRANCH_6, Vis::visit_lit_num_branch_6),
+            (kind::LIT_NUM_BRANCH_7, Vis::visit_lit_num_branch_7),
+            (kind::LIT_NUM_BRANCH_8, Vis::visit_lit_num_branch_8),
         )),
     ))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_10<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_0<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_10, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_1, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_BIN), Vis::visit_lit_num_bin))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_11<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_1<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_11, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_1, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_DEC), Vis::visit_lit_num_dec))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_12<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_2<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_12, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_2, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_FLOAT), Vis::visit_lit_num_float))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_13<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_3<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_13, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_3, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_HEX), Vis::visit_lit_num_hex))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_14<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_4<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_14, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_4, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_OCT), Vis::visit_lit_num_oct))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_15<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_5<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_15, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_5, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_S_BIN), Vis::visit_lit_num_bin))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_16<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_6<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_16, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_6, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_S_DEC), Vis::visit_lit_num_dec))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_17<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_7<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_17, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_7, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_S_HEX), Vis::visit_lit_num_hex))(visitor, NodeMove::Step)
 }
 
-pub fn lit_num_branch_18<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
+pub fn lit_num_branch_8<'tree, Vis>(visitor: &mut Vis, node_move: NodeMove) -> Result<(), SyntaxError<()>>
 where
     Vis: Visitor<'tree> + ?Sized,
 {
     visitor
         .walker()
-        .step(kind::LIT_NUM_BRANCH_18, node_move, GotoNext::StepInto)?;
+        .step(kind::LIT_NUM_BRANCH_8, node_move, GotoNext::StepInto)?;
     utils::seq((utils::token(symbol::LIT_S_OCT), Vis::visit_lit_num_oct))(visitor, NodeMove::Step)
 }
 
