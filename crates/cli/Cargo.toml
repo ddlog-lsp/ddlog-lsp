@@ -59,7 +59,7 @@ smol = { version = "1.2", optional = true }
 tokio = { version = "1.0", features = ["io-std", "macros", "sync"], optional = true }
 
 [dev-dependencies]
-predicates = "2.0"
+predicates = "2.1"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 assert_cmd = "2.0"
