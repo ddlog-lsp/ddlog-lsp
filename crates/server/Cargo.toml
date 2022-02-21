@@ -28,7 +28,7 @@ built = { version = "0.5", features = ["git2"] }
 anyhow = "1.0"
 async-lock = { version = "2.3", optional = true }
 bytes = "1.0"
-clap = "3.0"
+clap = "3.1"
 dashmap = "4.0"
 ddlog-lsp-languages = { version = "0.0", path = "../languages" }
 ddlog-lsp-syntax = { version = "0.0", path = "../syntax" }
